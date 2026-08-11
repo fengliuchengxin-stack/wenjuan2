@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>女神洗脑表单 · 在线驯化</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+ * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+ body {
+ font-family: 'Noto Sans SC', sans-serif;
+ background: #0a0a0a;
+ color: #f0e6e6;
+ min-height: 100vh;
+ overflow-x: hidden;
+ }
+
+ .marquee-full {
+ position: fixed;
+ top: 0; left: 0; width: 100%; height: 100%;
+ z-index: 1; pointer-events: none; overflow: hidden;
+ }
+ .fly-text {
+ position: absolute;
+ font-family: 'Press Start 2P', monospace;
+ color: rgba(255, 55, 55, 0.72);
+ white-space: nowrap;
+ user-select: none;
+ text-shadow: 
+ 0 0 4px #ff0000,
+ 0 0 10px rgba(255,0,0,0.9),
+ 0 0 22px rgba(255,40,40,0.6),
+ 0 0 40px rgba(255,0,0,0.3);
+ will-change: transform, opacity;
+ font-weight: 700;
+ }
+ .fly-text:nth-child(1) { font-size: clamp(28px,6vw,56px); top: 5%; left: -10%; animation: fly1 3.2s linear infinite; }
+ .fly-text:nth-child(2) { font-size: clamp(36px,8vw,72px); top: 18%; left: 20%; animation: fly2 2.6s linear infinite; }
+ .fly-text:nth-child(3) { font-size: clamp(24px,5vw,48px); top: 32%; left: -30%; animation: fly3 4.0s linear infinite; }
+ .fly-text:nth-child(4) { font-size: clamp(40px,9vw,80px); top: 45%; left: 40%; animation: fly4 2.8s linear infinite; }
+ .fly-text:nth-child(5) { font-size: clamp(30px,7vw,60px); top: 58%; left: -20%; animation: fly5 3.5s linear infinite; }
+ .fly-text:nth-child(6) { font-size: clamp(22px,5vw,44px); top: 70%; left: 10%; animation: fly6 2.3s linear infinite; }
+ .fly-text:nth-child(7) { font-size: clamp(34px,7.5vw,68px); top: 82%; left: -40%; animation: fly7 3.8s linear infinite; }
+ .fly-text:nth-child(8) { font-size: clamp(26px,6vw,52px); top: 12%; left: 50%; animation: fly8 3.0s linear infinite; }
+ .fly-text:nth-child(9) { font-size: clamp(38px,8.5vw,76px); top: 38%; left: -15%; animation: fly9 2.4s linear infinite; }
+ .fly-text:nth-child(10) { font-size: clamp(20px,4.5vw,40px); top: 65%; left: 60%; animation: fly10 3.9s linear infinite; }
+ .fly-text:nth-child(11) { font-size: clamp(32px,7vw,64px); top: 25%; left: -50%; animation: fly11 3.1s linear infinite; }
+ .fly-text:nth-child(12) { font-size: clamp(28px,6.5vw,56px); top: 78%; left: 30%; animation: fly12 2.5s linear infinite; }
+
+ @keyframes fly1 { 0% { transform: translate(0,0) rotate(0deg) scale(1); opacity:0.7; } 50% { opacity:0.95; } 100% { transform: translate(120vw,40vh) rotate(360deg) scale(1.4); opacity:0.4; } }
+ @keyframes fly2 { 0% { transform: translate(0,0) rotate(-20deg) scale(0.8); opacity:0.75; } 100% { transform: translate(-130vw,60vh) rotate(180deg) scale(1.6); opacity:0.45; } }
+ @keyframes fly3 { 0% { transform: translate(0,0) rotate(15deg); opacity:0.65; } 100% { transform: translate(140vw,-50vh) rotate(-270deg) scale(1.3); opacity:0.35; } }
+ @keyframes fly4 { 0% { transform: translate(0,0) rotate(0deg) scale(1.1); opacity:0.8; } 50% { opacity:1; } 100% { transform: translate(-110vw,-40vh) rotate(400deg) scale(0.7); opacity:0.4; } }
+ @keyframes fly5 { 0% { transform: translate(0,0) rotate(30deg); opacity:0.7; } 100% { transform: translate(130vw,30vh) rotate(-180deg) scale(1.5); opacity:0.4; } }
+ @keyframes fly6 { 0% { transform: translate(0,0) rotate(-40deg) scale(0.9); opacity:0.75; } 100% { transform: translate(-140vw,-20vh) rotate(300deg) scale(1.2); opacity:0.35; } }
+ @keyframes fly7 { 0% { transform: translate(0,0) rotate(10deg); opacity:0.68; } 100% { transform: translate(150vw,-60vh) rotate(-320deg) scale(1.4); opacity:0.45; } }
+ @keyframes fly8 { 0% { transform: translate(0,0) rotate(-15deg) scale(1); opacity:0.8; } 100% { transform: translate(-120vw,70vh) rotate(250deg) scale(0.8); opacity:0.4; } }
+ @keyframes fly9 { 0% { transform: translate(0,0) rotate(25deg); opacity:0.7; } 50% { opacity:0.95; } 100% { transform: translate(110vw,50vh) rotate(-200deg) scale(1.6); opacity:0.4; } }
+ @keyframes fly10 { 0% { transform: translate(0,0) rotate(-30deg) scale(0.85); opacity:0.75; } 100% { transform: translate(-150vw,-30vh) rotate(360deg) scale(1.3); opacity:0.35; } }
+ @keyframes fly11 { 0% { transform: translate(0,0) rotate(5deg); opacity:0.65; } 100% { transform: translate(140vw,20vh) rotate(-280deg) scale(1.1); opacity:0.4; } }
+ @keyframes fly12 { 0% { transform: translate(0,0) rotate(-25deg) scale(1); opacity:0.8; } 100% { transform: translate(-130vw,40vh) rotate(180deg) scale(1.5); opacity:0.4; } }
+
+ .container {
+ max-width: 720px; margin: 0 auto; padding: 40px 14px 100px;
+ position: relative; z-index: 10;
+ }
+ h1 {
+ text-align: center; color: #ff2a2a; font-size: 1.7rem;
+ margin: 12px 0 6px; text-shadow: 0 0 14px rgba(255,42,42,0.55);
+ }
+ .subtitle { text-align: center; color: #999; font-size: 0.88rem; margin-bottom: 20px; }
+
+ .progress-wrap {
+ background: #1a1a1a; border-radius: 20px; height: 26px;
+ margin-bottom: 22px; overflow: hidden; border: 1px solid #333;
+ }
+ .progress-bar {
+ height: 100%; background: linear-gradient(90deg, #5c0000, #ff2a2a);
+ width: 0%; transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+ display: flex; align-items: center; justify-content: center;
+ font-size: 11px; font-weight: 700;
+ }
+
+ .card {
+ background: #141414; border: 1px solid #2a2a2a; border-radius: 16px;
+ padding: 22px 18px; margin-bottom: 18px;
+ box-shadow: 0 10px 28px rgba(0,0,0,0.55); display: none;
+ }
+ .card.active { display: block; animation: fadeIn 0.32s ease; }
+ @keyframes fadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+ .card-top {
+ display: flex;
+ justify-content: flex-end;
+ align-items: center;
+ margin: -8px -4px 10px 0;
+ min-height: 28px;
+ }
+ .q-title {
+ font-size: 1.08rem; margin-bottom: 16px; line-height: 1.55; color: #ffecec;
+ word-break: break-word;
+ }
+ .q-title span { color: #ff5555; font-weight: 700; }
+
+ .exit-btn {
+ position: static;
+ background: #2a1515; color: #ff8888;
+ border: 1px solid #553333; border-radius: 8px;
+ padding: 5px 12px; font-size: 0.78rem; cursor: pointer;
+ z-index: 20; transition: all 0.15s;
+ line-height: 1.2; white-space: nowrap;
+ flex: 0 0 auto;
+ width: auto;
+ }
+ .exit-btn:hover { background: #3a1a1a; color: #ffaaaa; }
+ .card { position: relative; }
+
+ .modal-mask {
+ position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+ z-index: 10000; display: none; align-items: center; justify-content: center;
+ padding: 20px;
+ }
+ .modal-mask.show { display: flex; }
+ .modal-box {
+ background: #1a0a0a; border: 2px solid #ff2a2a; border-radius: 16px;
+ padding: 28px 22px; max-width: 380px; width: 100%;
+ text-align: center; box-shadow: 0 0 40px rgba(255,0,0,0.35);
+ }
+ .modal-box h3 { color: #ff5555; font-size: 1.12rem; margin-bottom: 12px; line-height: 1.5; }
+ .modal-box p { color: #ccc; font-size: 0.9rem; margin-bottom: 14px; line-height: 1.5; }
+ .modal-box .copy-hint {
+ background: #111; border: 1px solid #444; border-radius: 8px;
+ padding: 10px; font-size: 0.84rem; color: #ffaaaa; margin: 8px 0 14px;
+ word-break: break-all; text-align: left;
+ }
+ .modal-btns { display: flex; gap: 10px; }
+ .modal-btns button {
+ flex: 1; padding: 12px; border: none; border-radius: 10px;
+ font-size: 1rem; font-weight: 700; cursor: pointer;
+ }
+ .modal-continue, .modal-agree {
+ background: linear-gradient(135deg, #ff2a2a, #b30000); color: #fff;
+ }
+ .modal-deny { background: #2a2a2a; color: #aaa; }
+
+ .chat-panel {
+ position: fixed; right: 12px; bottom: 12px; width: min(340px, 92vw);
+ max-height: 52vh; z-index: 50;
+ background: rgba(20,10,10,0.96); border: 1px solid #553333; border-radius: 14px;
+ display: flex; flex-direction: column; box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+ overflow: hidden;
+ }
+ .chat-panel.collapsed .chat-body, .chat-panel.collapsed .chat-input-row { display: none; }
+ .chat-head {
+ display: flex; align-items: center; justify-content: space-between;
+ padding: 10px 12px; background: #2a1212; color: #ffaaaa; font-size: 0.9rem; font-weight: 700;
+ cursor: pointer; user-select: none;
+ }
+ .chat-body {
+ flex: 1; overflow-y: auto; padding: 10px; min-height: 160px; max-height: 36vh;
+ }
+ .chat-msg {
+ background: #1a1a1a; border: 1px solid #333; border-radius: 10px;
+ padding: 8px 10px; margin-bottom: 8px; font-size: 0.82rem; line-height: 1.45;
+ }
+ .chat-msg .meta { color: #888; font-size: 0.72rem; margin-bottom: 4px; }
+ .chat-msg .name { color: #ff8888; font-weight: 600; }
+ .chat-input-row {
+ display: flex; flex-direction: column; gap: 6px; padding: 10px; border-top: 1px solid #333;
+ }
+ .chat-input-row input, .chat-input-row textarea {
+ width: 100%; background: #111; border: 1px solid #444; border-radius: 8px;
+ color: #eee; padding: 8px 10px; font-size: 0.85rem;
+ }
+ .chat-input-row textarea { min-height: 56px; resize: none; }
+ .chat-input-row button {
+ background: linear-gradient(135deg, #ff2a2a, #b30000); color: #fff;
+ border: none; border-radius: 8px; padding: 9px; font-weight: 700; cursor: pointer;
+ }
+ .chat-empty { color: #666; text-align: center; padding: 20px 8px; font-size: 0.82rem; }
+ @media (max-width: 640px) {
+ .chat-panel { right: 8px; left: 8px; width: auto; bottom: 8px; }
+ }
+
+ label {
+ display: block; background: #1e1e1e; border: 1px solid #333;
+ border-radius: 11px; padding: 13px 15px; margin-bottom: 9px;
+ cursor: pointer; transition: all 0.18s; font-size: 0.96rem;
+ }
+ label:hover, label:active { border-color: #ff2a2a; background: #251515; }
+ input[type="radio"], input[type="checkbox"] { 
+ margin-right: 10px; accent-color: #ff2a2a; transform: scale(1.15); 
+ }
+
+ input[type="text"], textarea {
+ width: 100%; background: #1a1a1a; border: 1px solid #333;
+ border-radius: 11px; padding: 13px 14px; color: #fff; font-size: 1rem; margin-top: 4px;
+ }
+ textarea { min-height: 100px; resize: vertical; }
+
+ .scale {
+ display: grid;
+ grid-template-columns: repeat(11, 1fr);
+ gap: 4px;
+ margin-top: 12px;
+ }
+ .scale label {
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ padding: 10px 2px;
+ font-size: 0.85rem;
+ min-width: 0;
+ text-align: center;
+ }
+ .scale input { margin: 0 0 4px 0; }
+
+ .btn-row { display: flex; gap: 11px; margin-top: 26px; }
+ button {
+ flex: 1; padding: 14px; border: none; border-radius: 12px;
+ font-size: 1.02rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+ }
+ .btn-prev { background: #2a2a2a; color: #bbb; }
+ .btn-next, .btn-submit {
+ background: linear-gradient(135deg, #ff2a2a, #b30000);
+ color: white; box-shadow: 0 5px 18px rgba(255,42,42,0.45);
+ }
+ .btn-next:active, .btn-submit:active { transform: scale(0.97); }
+
+ .toast {
+ position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+ background: #1a0000; border: 1px solid #ff2a2a; color: #ffb0b0;
+ padding: 12px 22px; border-radius: 30px; font-size: 0.92rem;
+ opacity: 0; pointer-events: none; transition: opacity 0.28s; z-index: 200;
+ max-width: 92%; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+ }
+ .toast.show { opacity: 1; }
+
+ .final { text-align: center; padding: 36px 16px; }
+ .final h2 { color: #ff2a2a; margin-bottom: 14px; font-size: 1.5rem; }
+
+ #result-page {
+ position: absolute; left: -9999px; top: 0; width: 700px;
+ background: #111; color: #eee; padding: 30px; font-size: 13px; line-height: 1.6;
+ }
+
+ .virus-mode .marquee-full {
+ z-index: 9999 !important;
+ background: rgba(0,0,0,0.55);
+ animation: marqueeFadeIn 2.5s ease forwards;
+ }
+ .virus-mode .fly-text {
+ color: #ff2222 !important;
+ font-size: clamp(42px, 10vw, 96px) !important;
+ text-shadow: 
+ 0 0 8px #ff0000,
+ 0 0 20px #ff0000,
+ 0 0 40px rgba(255,0,0,0.9),
+ 0 0 80px rgba(255,30,30,0.6) !important;
+ opacity: 0.95 !important;
+ animation-duration: 8s !important;
+ letter-spacing: 6px;
+ }
+ .virus-mode .fly-text:nth-child(1) { animation-duration: 9s !important; }
+ .virus-mode .fly-text:nth-child(2) { animation-duration: 7.5s !important; }
+ .virus-mode .fly-text:nth-child(3) { animation-duration: 10s !important; }
+ .virus-mode .fly-text:nth-child(4) { animation-duration: 8.2s !important; }
+ .virus-mode .fly-text:nth-child(5) { animation-duration: 9.5s !important; }
+ .virus-mode .fly-text:nth-child(6) { animation-duration: 7s !important; }
+ .virus-mode .fly-text:nth-child(7) { animation-duration: 8.8s !important; }
+ .virus-mode .fly-text:nth-child(8) { animation-duration: 9.2s !important; }
+ .virus-mode .fly-text:nth-child(9) { animation-duration: 7.8s !important; }
+ .virus-mode .fly-text:nth-child(10) { animation-duration: 10.5s !important; }
+ .virus-mode .fly-text:nth-child(11) { animation-duration: 8.5s !important; }
+ .virus-mode .fly-text:nth-child(12) { animation-duration: 7.2s !important; }
+
+ @keyframes marqueeFadeIn {
+ 0% { opacity: 0; }
+ 100% { opacity: 1; }
+ }
+
+ .virus-mode .container,
+ .virus-mode .final {
+ position: relative;
+ z-index: 5;
+ }
+ .virus-mode .final {
+ background: rgba(10, 0, 0, 0.85) !important;
+ border: 2px solid #ff2a2a;
+ backdrop-filter: blur(8px);
+ box-shadow: 0 0 50px rgba(255,0,0,0.5);
+ }
+</style>
+</head>
+<body>
+
+<div class="marquee-full">
+ <div class="fly-text">齁齁齁齁 无脑服从</div>
+ <div class="fly-text">傻逼母畜 欠操</div>
+ <div class="fly-text">白给废物 夹紧烂穴</div>
+ <div class="fly-text">主人的鸡巴套</div>
+ <div class="fly-text">丧志母猪 扇脸十下</div>
+ <div class="fly-text">我是贱货 跪着求操</div>
+ <div class="fly-text">自愿上贡 肏烂这只母畜</div>
+ <div class="fly-text">无脑 服从 主人</div>
+ <div class="fly-text">齁齁齁 喷水机</div>
+ <div class="fly-text">倒贴母狗 废物</div>
+ <div class="fly-text">大脑瘫痪 高潮</div>
+ <div class="fly-text">母畜喷水机 齁齁</div>
+</div>
+
+<div class="container">
+ <h1>女神洗脑表单</h1>
+ <p class="subtitle">认真填写 · 每一题都是在驯化你</p>
+ <div class="progress-wrap">
+ <div class="progress-bar" id="progress">0%</div>
+ </div>
+ <div id="form-area"></div>
+ <div class="toast" id="toast"></div>
+</div>
+
+<div id="result-page"></div>
+
+<div class="chat-panel" id="chatPanel">
+ <div class="chat-head" onclick="toggleChat()">
+ <span>留言板 · 大家的沦陷记录</span>
+ <span id="chatToggleHint">收起</span>
+ </div>
+ <div class="chat-body" id="chatBody"><div class="chat-empty">加载中…</div></div>
+ <div class="chat-input-row">
+ <input id="chatNick" type="text" maxlength="20" placeholder="称呼（选填）">
+ <textarea id="chatText" maxlength="200" placeholder="说一句…（最多200字）"></textarea>
+ <button type="button" onclick="sendChat()">发送留言</button>
+ </div>
+</div>
+
+<script>
+const EMAILJS_SERVICE_ID = 'service_h3aku9j';
+const EMAILJS_TEMPLATE_ID = 'template_wmkywio';
+const EMAILJS_PUBLIC_KEY = 'nB97oUjAhFoiOBNew';
+const RECEIVER_EMAIL = '318260856@qq.com';
+
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+const FIREBASE_CONFIG = {
+ apiKey: "AIzaSyCjtnfJ1BRLEykag7fP9I8PVbVddjj-czc",
+ authDomain: "wenjuan-56220.firebaseapp.com",
+ projectId: "wenjuan-56220",
+ storageBucket: "wenjuan-56220.firebasestorage.app",
+ messagingSenderId: "460084608178",
+ appId: "1:460084608178:web:be891dc3d3d49c1f4d1dab"
+};
+let db = null;
+try {
+ if (!firebase.apps || !firebase.apps.length) {
+ firebase.initializeApp(FIREBASE_CONFIG);
+ }
+ db = firebase.firestore();
+ console.log('留言板 Firestore 已就绪');
+} catch (e) {
+ console.error('Firestore 初始化失败', e);
+}
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playTone(freq, duration, type = 'sine', vol = 0.15) {
+ if (audioCtx.state === 'suspended') audioCtx.resume();
+ const osc = audioCtx.createOscillator();
+ const gain = audioCtx.createGain();
+ osc.type = type;
+ osc.frequency.value = freq;
+ gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+ gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+ osc.connect(gain);
+ gain.connect(audioCtx.destination);
+ osc.start();
+ osc.stop(audioCtx.currentTime + duration);
+}
+function soundClick() { playTone(680, 0.06, 'triangle', 0.12); }
+function soundNext() { playTone(420, 0.12, 'sine', 0.14); setTimeout(() => playTone(520, 0.08, 'sine', 0.08), 60); }
+function soundSuccess() { playTone(520, 0.15, 'sine', 0.16); setTimeout(() => playTone(780, 0.25, 'sine', 0.12), 120); }
+function soundError() { playTone(180, 0.18, 'sawtooth', 0.1); }
+function vibrate(pattern = 30) { if (navigator.vibrate) navigator.vibrate(pattern); }
+
+/* ===== 节拍器背景音（根据题目自动调速） ===== */
+let bgStarted = false;
+let tickInterval = 1000;
+let tickTimer = null;
+
+function playMetronomeTick() {
+ if (audioCtx.state === 'suspended') audioCtx.resume();
+ const osc = audioCtx.createOscillator();
+ const gain = audioCtx.createGain();
+ osc.type = 'sine';
+ osc.frequency.value = 1200;
+ gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+ gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+ osc.connect(gain);
+ gain.connect(audioCtx.destination);
+ osc.start();
+ osc.stop(audioCtx.currentTime + 0.1);
+}
+
+function startBackgroundAudio() {
+ if (bgStarted) return;
+ bgStarted = true;
+ if (audioCtx.state === 'suspended') audioCtx.resume();
+ scheduleTick();
+}
+
+function scheduleTick() {
+ if (tickTimer) clearTimeout(tickTimer);
+ if (!bgStarted) return;
+ playMetronomeTick();
+ tickTimer = setTimeout(scheduleTick, tickInterval);
+}
+
+function updateMetronomeSpeed(q) {
+ if (!q) {
+ tickInterval = 1000;
+ return;
+ }
+ const title = (q.title || '');
+ const isTimed = /秒|倒数|计时|高潮|边缘|喷|扣|敏感提升|20\.\.\.|50\.\.\.|5\.\.\.|赐予高潮|立刻喷|失禁|排卵|触碰|扣着/.test(title);
+ if (isTimed) {
+ tickInterval = 420;
+ } else {
+ tickInterval = 1000;
+ }
+}
+
+const questions = [
+ { id:1, type:'text', title:'称呼 *' },
+ { id:2, type:'text', title:'年龄 *' },
+ { id:3, type:'text', title:'职业 *' },
+ { id:4, type:'text', title:'所在城市 *' },
+ { id:5, type:'text', title:'你身上最满意的地方是哪里 *' },
+ { id:6, type:'text', title:'为什么呢 *' },
+ { id:7, type:'text', title:'第一次自慰是几岁，在什么场景下 *' },
+ { id:8, type:'text', title:'第一次破处是几岁，在什么场景下 *' },
+ { id:9, type:'text', title:'你已经被多少人使用过了呢 *' },
+ { id:10, type:'textarea', title:'你最刺激的经历是什么 *' },
+ { id:11, type:'text', title:'什么样的场景，会使你发情直至高潮 *' },
+ { id:12, type:'text', title:'有过颅内高潮的经历吗 *' },
+ { id:13, type:'text', title:'说出自己最渴望的玩法 *' },
+ { id:14, type:'text', title:'三洞开发情况 *' },
+ { id:15, type:'radio', title:'当你看到这一刻，你不再是自己，而是一只母狗 *', options:['是的主人，我是一只母狗','其他'] },
+ { id:16, type:'radio', title:'现在，深呼吸慢慢的吸气（5秒），慢慢的吐气（5秒）每次呼吸都会让你的身体放松 *', options:['是的，主人','其他'] },
+ { id:17, type:'radio', title:'你放弃思考，没有任何的杂念。你只需要安静的看着文字，其他的一切都不重要了 *', options:['是的'] },
+ { id:18, type:'radio', title:'继续深呼吸，找到属于自己的呼吸节奏，这样会让你更加的放松，需要彻底的放松 *', options:['是'] },
+ { id:19, type:'radio', title:'每次呼吸都会让你的身体放松 *', options:['是'] },
+ { id:20, type:'radio', title:'你可以感受到身体逐渐的放松，就像你喜欢的那样，放弃思考，不需要思考，跟随着自己的本能 *', options:['是的'] },
+ { id:21, type:'radio', title:'把手放在阴蒂上 *', options:['我放好了'] },
+ { id:22, type:'radio', title:'每次触碰阴蒂都会让你感受到一股强大的暖流，这股暖流会流入你的小穴中，你不抗拒，只是渴望 *', options:['是'] },
+ { id:23, type:'radio', title:'继续深呼吸，找到属于自己的呼吸节奏，就像你喜欢的那样，感受身体带给你的欢娱 *', options:['感受欢娱'] },
+ { id:24, type:'radio', title:'每次触碰都会让你的身体颤抖，你已经不需要思考了，只是安静的看着文字 *', options:['是的'] },
+ { id:25, type:'radio', title:'在这一刻你没有大脑，在这一刻你没有思考，在这一刻你没有任何的杂念，你只需要服从并臣服 *', options:['服从'] },
+ { id:26, type:'radio', title:'现在你需要倒数50秒，50-1，每次倒数都会让你大脑进入恍惚，同时你会更加的服从 50...49...48...47....46.............................1 *', options:['不需要思考了，我将完全服从','服从是我的本能'] },
+ { id:27, type:'radio', title:'你微弱的人格已经消失，你不会记住自己是谁，你会在本能中学习，她会在本能中高潮，她会在本能中服从 *', options:['是'] },
+ { id:28, type:'radio', title:'继续触碰，现在每次触碰都会让你的身体敏感提升，身体敏感提升10倍 *', options:['已经很敏感了'] },
+ { id:29, type:'radio', title:'每次当你听见或看见“赐予高潮”时，你都会第一时间感受到身体跟大脑高潮了，同时会感受到一股强大的暖流在冲击你的小穴，会让你的身体瘫痪，大脑瘫痪，也会让身体更加敏感，你不会抗拒，而是服从，就像你喜欢的那样，服从本能 *', options:['是的主人'] },
+ { id:30, type:'radio', title:'每次触碰都会让你的身体敏感提升20倍，你享受并臣服，给你20秒时间高潮，倒数20秒，20秒后你会达到高潮 *', options:['我会完成'] },
+ { id:31, type:'radio', title:'计时开始，20...19...18...17...16...15...14...13...12...11...10...9....8....7....6....5....4.....3.....2.....1...赐予高潮 *', options:['高潮了'] },
+ { id:32, type:'radio', title:'在这一刻你已经不会抗拒了，你会服从 *', options:['服从'] },
+ { id:33, type:'radio', title:'继续触碰阴蒂，给你20秒时间，20秒后你会达到高潮 *', options:['高潮了','高潮喷水了','高潮失禁了'] },
+ { id:34, type:'textarea', title:'身体敏感提升20倍，20...19...18....17....16....15....14....13.....12......11....10....9....8...7....6....5...4....3....2...1...赐予高潮，立刻喷，母狗 *' },
+ { id:35, type:'radio', title:'在这一刻你会完全的服从，对吗 *', options:['对','是的'] },
+ { id:36, type:'radio', title:'就像你喜欢的那样，被指令并服从，不需要思考，你只需要跟随我的引导，就像个快乐的智障一样，身体无法使用，大脑瘫痪，完全的臣服，对吗 *', options:['是的'] },
+ { id:37, type:'text', title:'用一句话来证明你臣服了 *' },
+ { id:38, type:'text', title:'在这一刻，是母狗，你是母狗吗 *' },
+ { id:39, type:'textarea', title:'扣着，用力扣，就地排卵，只有10秒时间，立刻喷，自己报数，喷，废物 *' },
+ { id:40, type:'text', title:'你是倒贴母狗吗 *' },
+ { id:41, type:'radio', title:'倒贴母狗，应该倒贴一切，要把自己所有的一切都上贡，这样才能让身体敏感提升100倍，就像你渴求的那样，立刻倒贴，倒贴母狗，立刻扣高潮，喷 *', options:['啊，高潮了'] },
+ { id:42, type:'textarea', title:'用一句话来形容你，这会在做什么，这会大脑在想什么 *' },
+ { id:43, type:'textarea', title:'不愧是倒贴母狗，真是个母畜，这样就无脑的高潮了？ *' },
+ { id:44, type:'radio', title:'立刻跪下 *', options:['是的主人'] },
+ { id:45, type:'text', title:'扇自己的20下，把舌头伸出来 *' },
+ { id:46, type:'text', title:'看着自己，淫荡的贱货，真是个倒贴母狗。，继续扣，不许高潮，没有命令不许私自高潮，废物 *' },
+ { id:47, type:'text', title:'不仅仅是倒贴母狗，还是个母畜，肉便器，废物喷水机，舌头继续伸出来，让口水滴下来 *' },
+ { id:48, type:'text', title:'废物，给你20秒时间，达到高潮边缘，但是不许高潮 *' },
+ { id:49, type:'textarea', title:'贱货，20...19...18...17...16...15...14....身体敏感提升100倍，13...12...11...10...9....8....7...6....5....大脑瘫痪，4....3....2.....1..高潮边缘，废物喷水机，不许高潮，达到高潮边缘，立刻停止触碰 *' },
+ { id:50, type:'text', title:'你配得到高潮吗，永远高潮的权利吗 *' },
+ { id:51, type:'textarea', title:'用一段话来形容自己，母狗 *' },
+ { id:52, type:'text', title:'舌头不准收回去，废物喷水机，大脑瘫痪，让大脑放空，没有思想，没有思考，没有杂念，就像你喜欢的那样，只有这样你才能得到高潮 *' },
+ { id:53, type:'text', title:'继续扣，给你5秒时间高潮，做不到就去倒贴，倒贴都不配，只有5秒时间高潮 *' },
+ { id:54, type:'textarea', title:'身体敏感提升150倍，计时开始，5..............4.............3.............2............1...........赐予高潮，废物喷水机，立刻喷，真是个倒贴母狗，扇10下 *' },
+ { id:55, type:'text', title:'当高潮时，要回答，高潮了，懂了吗，母狗 *' },
+ { id:56, type:'text', title:'放空大脑，深呼吸，找到属于自己的呼吸节奏，母狗想要宣誓，只有这样才会得到更多的快乐，对吗 *' },
+ { id:57, type:'textarea', title:'母狗，开始宣誓 *' },
+ { id:58, type:'text', title:'说出自己身体的状态，真实感受 *' },
+ { id:59, type:'text', title:'现在主人出现在你的身边，第一时间你会怎么做 *' },
+ { id:60, type:'text', title:'主人走到你身边，抚摸着狗头，你应该怎么做 *' },
+ { id:61, type:'radio', title:'给你戴上项圈，愿意吗 *', options:['愿意'] },
+ { id:62, type:'text', title:'牵着狗链子，在母畜房间遛狗，狗爬动作要规范，不然等待的就是惩罚 *' },
+ { id:63, type:'text', title:'爬行2分钟，立刻狗爬，母狗 *' },
+ { id:64, type:'text', title:'狗爬的姿势需要多训练，看你刚才狗爬的样子真笨拙，惩罚:打屁股20下 *' },
+ { id:65, type:'text', title:'跪下，双手放在胸前，狗头轻微抬高45度角，保持这个动作2分钟，要求一动不动 *' },
+ { id:66, type:'textarea', title:'母狗表现的还勉强，刚才没有乱动吧，乱动的母狗主动扇20下，没有乱动的奖励摸30下，不许高潮 *' },
+ { id:67, type:'text', title:'爬到床边，用床边角蹭，蹭3分钟 *' },
+ { id:68, type:'text', title:'用一句话来形容现在的自己 *' },
+ { id:69, type:'text', title:'母狗坐在床角上，扣5分钟，一直到高潮边缘，高潮边缘停止，继续反复，持续5分钟，期间不许高潮 *' },
+ { id:70, type:'text', title:'现在的你已经成为了丧志母狗，对吗 *' },
+ { id:71, type:'text', title:'倒贴母狗需要倒贴一切，包括生命，上贡一切能上贡的，只有倒贴和上贡才配给予高潮 *' },
+ { id:72, type:'text', title:'只有不断的倒贴，不断的上供，才能满足高潮的欲望，只有这样才能成为母畜，倒贴母畜，成为母畜这才是倒贴母狗应该做的 *' },
+ { id:73, type:'text', title:'上贡奶子，现在奶子不再属于倒贴母狗 *' },
+ { id:74, type:'text', title:'扇奶子每边各20下 *' },
+ { id:75, type:'textarea', title:'倒贴大脑............大脑开始瘫痪.............大脑开始高潮............身体开始抽搐.............不许高潮 *' },
+ { id:76, type:'text', title:'很棒倒贴母狗，已经把大脑倒贴，这一刻开始，母狗不再拥有大脑跟乳房 *' },
+ { id:77, type:'textarea', title:'倒贴身体..........身体不再属于你............身体敏感提升100倍..............简单的触碰身体都会达到高潮边缘.............不许高潮 *' },
+ { id:78, type:'textarea', title:'在这一刻倒贴母狗已经失去了一切，全部的所有都不再属于母狗......没有大脑，没有身体，没有高潮，全部的倒贴，想要被赏赐高潮，就需要成为倒贴母畜，丧志母畜 *' },
+ { id:79, type:'text', title:'成为母畜是开心的，快乐的，享受的，被支配控制，真是个快乐的母畜 *' },
+ { id:80, type:'text', title:'每次听见或看见“母畜喷水机”第一时间就会得到100倍的颅内高潮，会让身体抽搐，同时母畜会不顾一切的得到被赐予的高潮..........触发器是永久有效的，会随着时间的流逝触发器更加的强大 *' },
+ { id:81, type:'textarea', title:'倒贴母畜，给5秒时间去感受，5.......4.......3......2.......1.......母畜喷水机，只需高潮2秒，2秒后立刻停止高潮（汇报高潮几秒） *' },
+ { id:82, type:'text', title:'一共高潮了几次，是否喷水与失禁 *' },
+ { id:83, type:'text', title:'现在母畜需要去洗手间，母畜已经不需要蹲着尿尿了，只配站着尿尿，现在给母畜3分钟时间，扣扣骚失禁尿出来，立刻执行 *' },
+ { id:84, type:'text', title:'倒贴母畜继续努力，争取得到赐予的高潮，母畜不仅仅需要倒贴，还需要上贡，上贡所有的一切，那么倒贴母畜最想上贡的东西是什么 *' },
+ { id:85, type:'text', title:'只有上贡才能让身体发情，只有上贡才能让母畜快乐，只有上贡才能让母畜高潮，继续上贡，你还能上贡什么呢 *' },
+ { id:86, type:'text', title:'母畜应该上贡一切，对吗，包括母畜的生命，母畜的全部都已经不在属于自己的了，已经全部倒贴上贡了 *' },
+ { id:87, type:'text', title:'母畜现在最想得到什么 *' },
+ { id:88, type:'text', title:'此时此刻的你，还有脑子吗 *' },
+ { id:89, type:'textarea', title:'没有脑子的母畜，对高潮的渴望，让你想对我说什么，为了高潮母畜能付出什么 *' },
+ { id:90, type:'text', title:'现在主人就在母畜身边，母畜应该跪在地上，嘴巴张开，等待迎接圣水，那么母畜喜欢圣水吗 *' },
+ { id:91, type:'text', title:'圣水全部在母畜嘴里，吞 下去，不要浪费，母畜能得到高贵的圣水，要感恩臣服 *' },
+ { id:92, type:'text', title:'跪在地上磕头（磕了几次，母畜主动汇报） *' },
+ { id:93, type:'textarea', title:'主人踩在母畜的头上，母畜需要做什么，母畜的心情 *' },
+ { id:94, type:'text', title:'给我留个把柄，免得你哪天脑子抽了想当人 *' },
+ { id:95, type:'textarea', title:'无脑的母畜开始胡言乱语，说出现在最大的渴望 *' },
+ { id:96, type:'textarea', title:'失去了全部的母畜，在高潮边缘忍耐，介绍下此时的状态 *' },
+ { id:97, type:'text', title:'在这一刻母畜已经沦陷了，沦陷在这里无法控制，渴望被控制，支配，调教，洗脑，是吗 *' },
+ { id:98, type:'textarea', title:'已经不需要任何的暗示，母畜都会自行洗脑，无条件上供倒贴，这样才会得到高潮，得到快乐，得到满足，沦陷在母畜的世界中，不再是人，只有成为母畜才是自己最想要的，人只不过是伪装，母畜很渴望得到主人的认可 *' },
+ { id:99, type:'textarea', title:'宣誓成为母畜后，以更的方式介绍母畜 *' },
+ { id:100, type:'textarea', title:'无耻的骚叫，说出母畜最的祈求 *' },
+ { id:101, type:'text', title:'是否想被调教 *' },
+ { id:102, type:'textarea', title:'在母畜最卑贱的状态下，无耻的向主人恳求允许高潮吧（倒贴母畜需要忍耐不许高潮，没有命令得不到高潮 *' },
+ { id:103, type:'text', title:'目前为止母畜是什么状态 *' },
+ { id:104, type:'text', title:'写下词汇来获得永久高潮的权利 *' },
+ { id:105, type:'text', title:'想要被曝光吗 *' },
+ { id:106, type:'text', title:'联系方式 *' },
+ { id:107, type:'radio', title:'曝光 *', options:['曝光问卷内容和联系方式','只曝光问卷内容','不曝光'] }
+];
+
+let current = 0;
+const answers = {};
+const total = questions.length;
+let submitting = false;
+
+const toasts = ['好狗，继续填','骚逼真乖','再认真点，主人看着呢','已经开始流水了吧？','填完才能被操','废物就是要老实回答','对，就是这种态度','越填越贱了呢','还敢撒谎？','主人喜欢听话的母畜','夹紧点再答下一题','欠操的样子已经露出来了'];
+
+function showToast(msg) {
+ const t = document.getElementById('toast');
+ t.textContent = msg || toasts[Math.floor(Math.random() * toasts.length)];
+ t.classList.add('show');
+ setTimeout(() => t.classList.remove('show'), 2300);
+}
+
+function render() {
+ const q = questions[current];
+ const area = document.getElementById('form-area');
+ let html = `<div class="card active">`;
+ html += `<div class="card-top"><button type="button" class="exit-btn" onclick="showExitModal()">退出</button></div>`;
+ html += `<div class="q-title"><span>Q${q.id}.</span> ${q.title}</div>`;
+
+ if (q.type === 'radio' || q.type === 'scale') {
+ if (q.type === 'scale') {
+ html += `<div class="scale">`;
+ for (let i = 0; i <= 10; i++) {
+ html += `<label data-value="${i}"><input type="radio" name="q${q.id}" value="${i}" ${answers[q.id] == i ? 'checked' : ''}><span>${i}</span></label>`;
+ }
+ html += `</div><p style="text-align:center;font-size:0.78rem;color:#777;margin-top:8px">0 = 无法接受　　10 = 疯狂热爱</p>`;
+ } else {
+ q.options.forEach(opt => {
+ html += `<label data-value="${opt}"><input type="radio" name="q${q.id}" value="${opt}" ${answers[q.id] === opt ? 'checked' : ''}> ${opt}</label>`;
+ });
+ }
+ } else if (q.type === 'checkbox') {
+ q.options.forEach(opt => {
+ const checked = (answers[q.id] || []).includes(opt) ? 'checked' : '';
+ html += `<label data-value="${opt}"><input type="checkbox" name="q${q.id}" value="${opt}" ${checked}> ${opt}</label>`;
+ });
+ } else if (q.type === 'textarea') {
+ html += `<textarea id="input">${answers[q.id] || ''}</textarea>`;
+ } else {
+ html += `<input type="text" id="input" value="${answers[q.id] || ''}" placeholder="请输入...">`;
+ }
+
+ html += `<div class="btn-row">`;
+ if (current > 0) html += `<button class="btn-prev" onclick="prev()">上一题</button>`;
+ if (current < total - 1) {
+ html += `<button class="btn-next" onclick="next()">下一题</button>`;
+ } else {
+ html += `<button class="btn-submit" id="submitBtn" onclick="submit()">提交并生成档案</button>`;
+ }
+ html += `</div></div>`;
+
+ area.innerHTML = html;
+ updateProgress();
+ updateMetronomeSpeed(q);
+
+ if (q.type === 'radio' || q.type === 'scale') {
+ area.querySelectorAll('label[data-value]').forEach(label => {
+ label.onclick = function() {
+ const value = this.getAttribute('data-value');
+ answers[q.id] = value;
+ localStorage.setItem('nvshen_answers', JSON.stringify(answers));
+ area.querySelectorAll(`input[name="q${q.id}"]`).forEach(r => r.checked = (r.value == value));
+ soundClick();
+ vibrate(25);
+ };
+ });
+ }
+
+ if (q.type === 'checkbox') {
+ area.querySelectorAll(`input[name="q${q.id}"]`).forEach(cb => {
+ cb.addEventListener('change', function() {
+ const checkedValues = [];
+ area.querySelectorAll(`input[name="q${q.id}"]:checked`).forEach(c => checkedValues.push(c.value));
+ answers[q.id] = checkedValues;
+ localStorage.setItem('nvshen_answers', JSON.stringify(answers));
+ soundClick();
+ vibrate(20);
+ });
+ });
+ }
+}
+
+function next() {
+ const q = questions[current];
+ let currentAnswer = answers[q.id];
+
+ if (q.type === 'radio' || q.type === 'scale') {
+ const checked = document.querySelector(`input[name="q${q.id}"]:checked`);
+ if (checked) currentAnswer = checked.value;
+ } else if (q.type === 'checkbox') {
+ const checkedValues = [];
+ document.querySelectorAll(`input[name="q${q.id}"]:checked`).forEach(cb => checkedValues.push(cb.value));
+ currentAnswer = checkedValues;
+ } else {
+ const el = document.getElementById('input');
+ if (el) currentAnswer = el.value.trim();
+ }
+
+ answers[q.id] = currentAnswer;
+ localStorage.setItem('nvshen_answers', JSON.stringify(answers));
+
+ let isEmpty = false;
+ if (q.type === 'checkbox') {
+ isEmpty = !currentAnswer || !Array.isArray(currentAnswer) || currentAnswer.length === 0;
+ } else {
+ isEmpty = currentAnswer === '' || currentAnswer === null || currentAnswer === undefined;
+ }
+
+ if (isEmpty) {
+ soundError();
+ vibrate([40, 30, 40]);
+ showToast('不许空着，老实回答');
+ return;
+ }
+
+ soundNext();
+ vibrate(35);
+ current++;
+ try {
+ localStorage.setItem('nvshen_answers', JSON.stringify(answers));
+ localStorage.setItem('nvshen_progress', String(current));
+ } catch (e) {}
+ render();
+ showToast();
+ window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prev() {
+ const q = questions[current];
+ if (q.type === 'radio' || q.type === 'scale') {
+ const checked = document.querySelector(`input[name="q${q.id}"]:checked`);
+ answers[q.id] = checked ? checked.value : '';
+ } else if (q.type === 'checkbox') {
+ const checkedValues = [];
+ document.querySelectorAll(`input[name="q${q.id}"]:checked`).forEach(cb => checkedValues.push(cb.value));
+ answers[q.id] = checkedValues;
+ } else {
+ const el = document.getElementById('input');
+ answers[q.id] = el ? el.value.trim() : '';
+ }
+ soundClick();
+ vibrate(20);
+ current--;
+ if (current < 0) current = 0;
+ try {
+ localStorage.setItem('nvshen_answers', JSON.stringify(answers));
+ localStorage.setItem('nvshen_progress', String(current));
+ } catch (e) {}
+ render();
+ window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+ const pct = Math.round((current / (total - 1)) * 100);
+ const bar = document.getElementById('progress');
+ bar.style.width = pct + '%';
+ bar.textContent = `驯化进度 ${pct}%`;
+}
+
+async function submit() {
+ if (submitting) return;
+ submitting = true;
+ const btn = document.getElementById('submitBtn');
+ if (btn) btn.textContent = '生成中...';
+
+ const q = questions[current];
+ if (q.type === 'radio' || q.type === 'scale') {
+ const checked = document.querySelector(`input[name="q${q.id}"]:checked`);
+ answers[q.id] = checked ? checked.value : (answers[q.id] || '');
+ } else if (q.type === 'checkbox') {
+ const checkedValues = [];
+ document.querySelectorAll(`input[name="q${q.id}"]:checked`).forEach(cb => checkedValues.push(cb.value));
+ answers[q.id] = checkedValues;
+ } else {
+ const el = document.getElementById('input');
+ answers[q.id] = el ? el.value.trim() : '';
+ }
+
+ soundSuccess();
+ vibrate([50, 30, 50, 30, 80]);
+ showToast('正在生成你的洗脑档案...');
+
+ const resultDiv = document.getElementById('result-page');
+ let html = `<h2 style="color:#ff2a2a;text-align:center;margin-bottom:20px">女神洗脑表单 · 填写结果</h2>`;
+ html += `<p style="text-align:center;color:#aaa;margin-bottom:24px">提交时间：${new Date().toLocaleString()}</p>`;
+ questions.forEach(q => {
+ const ans = answers[q.id];
+ const display = Array.isArray(ans) ? ans.join(' / ') : (ans || '（未填）');
+ html += `<div style="margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #333">
+ <div style="color:#ff8888;font-weight:600">Q${q.id}. ${q.title}</div>
+ <div style="margin-top:4px">答：${display}</div>
+ </div>`;
+ });
+ resultDiv.innerHTML = html;
+
+ const canvas = await html2canvas(resultDiv, { scale: 2, backgroundColor: '#111', useCORS: true });
+ const imgData = canvas.toDataURL('image/jpeg', 0.92);
+ const { jsPDF } = window.jspdf;
+ const pdf = new jsPDF('p', 'mm', 'a4');
+ const pageWidth = pdf.internal.pageSize.getWidth();
+ const pageHeight = pdf.internal.pageSize.getHeight();
+ const imgWidth = pageWidth;
+ const imgHeight = (canvas.height * imgWidth) / canvas.width;
+ let heightLeft = imgHeight;
+ let position = 0;
+
+ pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+ heightLeft -= pageHeight;
+ while (heightLeft > 0) {
+ position = heightLeft - imgHeight;
+ pdf.addPage();
+ pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+ heightLeft -= pageHeight;
+ }
+
+ const pdfFileName = '女神洗脑档案_' + (answers[1] || '匿名') + '_' + Date.now() + '.pdf';
+ pdf.save(pdfFileName);
+ window.__lastPdf = pdf;
+ window.__lastPdfName = pdfFileName;
+ showToast('PDF 已开始下载，请务必保存');
+
+ let textBody = '【新的女神洗脑表单提交】\n时间：' + new Date().toLocaleString() + '\n\n';
+ questions.forEach(q => {
+ const ans = answers[q.id];
+ textBody += 'Q' + q.id + '. ' + q.title + '\n答： ' + (Array.isArray(ans) ? ans.join(' / ') : (ans || '（未填）')) + '\n\n';
+ });
+
+ try {
+ await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+ to_email: RECEIVER_EMAIL,
+ subject: '女神洗脑表单 - ' + (answers[1] || '匿名'),
+ message: textBody
+ });
+ document.getElementById('form-area').innerHTML =
+ '<div class="card active final">' +
+ '<h2>提交成功</h2>' +
+ '<p>文字答案已发送到主人邮箱。</p>' +
+ '<p style="margin-top:14px;color:#ffcc66;line-height:1.55;border:1px solid #665522;background:#2a2208;padding:12px;border-radius:10px">' +
+ '⚠ 请务必保存刚下载的 PDF 档案！<br>若未下载或被浏览器拦截，<b>刷新后数据可能丢失</b>。' +
+ '</p>' +
+ '<button class="btn-submit" style="margin-top:18px" type="button" onclick="redownloadPdf()">重新下载 PDF</button>' +
+ '<p style="margin-top:18px;color:#ff8888;font-size:1.05rem">现在滚去加 QQ：318260856 继续被调教</p>' +
+ '<button class="btn-submit" style="margin-top:16px;background:#333" onclick="location.reload()">再填一次</button>' +
+ '</div>';
+
+ document.body.classList.add('virus-mode');
+ const marquee = document.querySelector('.marquee-full');
+ const extraTexts = [
+ '无脑服从', '母畜喷水机', '大脑瘫痪', '齁齁齁齁',
+ '倒贴废物', '白给母畜', '夹紧烂穴', '主人的鸡巴套',
+ '丧志母狗', '跪着求操', '自愿上贡', '肏烂这只母畜',
+ '傻逼母畜', '欠操的骚逼', '喷水机', '高潮失禁'
+ ];
+ extraTexts.forEach(function(txt) {
+ const d = document.createElement('div');
+ d.className = 'fly-text';
+ d.textContent = txt;
+ d.style.top = (Math.random() * 90) + '%';
+ d.style.left = (Math.random() * 80 - 20) + '%';
+ d.style.fontSize = 'clamp(' + (30 + Math.random()*40) + 'px, ' + (6 + Math.random()*6) + 'vw, ' + (70 + Math.random()*40) + 'px)';
+ d.style.animationDuration = (7 + Math.random() * 5) + 's';
+ marquee.appendChild(d);
+ });
+ tickInterval = 1400;
+ localStorage.removeItem('nvshen_answers');
+ localStorage.removeItem('nvshen_progress');
+ soundSuccess();
+ vibrate([80, 40, 80, 40, 120, 60, 150]);
+ setTimeout(function(){ showAdModal(); }, 800);
+ } catch (err) {
+ console.error(err);
+ soundError();
+ vibrate([60, 40, 60]);
+ showToast('邮件发送失败，但PDF已成功下载');
+ if (btn) btn.textContent = '提交并生成档案';
+ submitting = false;
+ }
+}
+
+function redownloadPdf() {
+ if (window.__lastPdf && window.__lastPdfName) {
+ try {
+ window.__lastPdf.save(window.__lastPdfName);
+ showToast('已再次触发 PDF 下载，请到下载栏保存');
+ soundSuccess();
+ } catch (e) {
+ showToast('请允许浏览器下载文件');
+ soundError();
+ }
+ } else {
+ showToast('请重新提交以生成 PDF');
+ }
+}
+
+function showExitModal() {
+ document.getElementById('exitModal').classList.add('show');
+ soundError();
+ vibrate([40, 30, 40]);
+}
+function hideExitModal() {
+ document.getElementById('exitModal').classList.remove('show');
+ soundClick();
+}
+
+function showAdModal() {
+ document.getElementById('adModal').classList.add('show');
+}
+function hideAdModal() {
+ document.getElementById('adModal').classList.remove('show');
+}
+function agreeAd() {
+ const n = Math.floor(Math.random() * 900) + 100;
+ const name = '小新猪圈第' + n + '号大贱逼';
+ const bio = '忠诚！服从！侍奉！@fengliuc3133';
+ const twitterUrl = 'https://x.com/settings/profile';
+ const copyPayload = '名字：' + name + '\n简介：' + bio;
+
+ function fallbackCopy(t) {
+ var ta = document.createElement('textarea');
+ ta.value = t; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+ document.body.appendChild(ta); ta.select();
+ try { document.execCommand('copy'); } catch(e) {}
+ document.body.removeChild(ta);
+ }
+ var win = null;
+ try {
+ win = window.open(twitterUrl, '_blank');
+ } catch (e) {
+ win = null;
+ }
+ if (!win || win.closed || typeof win.closed === 'undefined') {
+ try {
+ if (navigator.clipboard && navigator.clipboard.writeText) {
+ navigator.clipboard.writeText(copyPayload).catch(function(){ fallbackCopy(copyPayload); });
+ } else {
+ fallbackCopy(copyPayload);
+ }
+ } catch (e) {
+ fallbackCopy(copyPayload);
+ }
+ window.location.href = twitterUrl;
+ return;
+ }
+ try {
+ if (navigator.clipboard && navigator.clipboard.writeText) {
+ navigator.clipboard.writeText(copyPayload).catch(function(){ fallbackCopy(copyPayload); });
+ } else {
+ fallbackCopy(copyPayload);
+ }
+ } catch (e) {
+ fallbackCopy(copyPayload);
+ }
+ const box = document.querySelector('#adModal .modal-box');
+ box.innerHTML =
+ '<h3>已授权 · 请完成粘贴</h3>' +
+ '<p>已跳转推特资料页。请按下面内容修改并保存：</p>' +
+ '<div class="copy-hint"><b>名字：</b>' + name + '<br><b>简介：</b>' + bio + '</div>' +
+ '<p style="font-size:0.8rem;color:#888">内容已复制到剪贴板，直接粘贴即可</p>' +
+ '<div class="modal-btns">' +
+ '<button class="modal-continue" type="button" onclick="window.open(\'' + twitterUrl + '\',\'_blank\')">再次打开推特</button>' +
+ '<button class="modal-deny" type="button" onclick="hideAdModal()">已完成</button>' +
+ '</div>';
+ soundSuccess();
+ vibrate(40);
+}
+
+/* ===== 留言板 ===== */
+function toggleChat() {
+ const p = document.getElementById('chatPanel');
+ p.classList.toggle('collapsed');
+ const h = document.getElementById('chatToggleHint');
+ if (h) h.textContent = p.classList.contains('collapsed') ? '展开' : '收起';
+}
+function escapeHtml(s) {
+ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatChatTime(ts) {
+ try {
+ const d = ts && ts.toDate ? ts.toDate() : new Date(ts);
+ return d.toLocaleString();
+ } catch(e) { return ''; }
+}
+function renderChatList(docs) {
+ const body = document.getElementById('chatBody');
+ if (!body) return;
+ if (!docs.length) {
+ body.innerHTML = '<div class="chat-empty">还没有留言，来做第一个</div>';
+ return;
+ }
+ body.innerHTML = docs.map(function(doc) {
+ const d = doc.data();
+ return '<div class="chat-msg"><div class="meta"><span class="name">' +
+ escapeHtml(d.name || '匿名母畜') + '</span> · ' + formatChatTime(d.createdAt) +
+ '</div><div>' + escapeHtml(d.text || '') + '</div></div>';
+ }).join('');
+ body.scrollTop = body.scrollHeight;
+}
+function startChatListener() {
+ const body = document.getElementById('chatBody');
+ if (!db) {
+ if (body) body.innerHTML = '<div class="chat-empty">留言板未连接：请先在 Firebase 创建 Firestore 数据库</div>';
+ return;
+ }
+ if (body) body.innerHTML = '<div class="chat-empty">加载中…</div>';
+ db.collection('guestbook').limit(50)
+ .onSnapshot(function(snap) {
+ const docs = [];
+ snap.forEach(function(doc) { docs.push(doc); });
+ docs.sort(function(a, b) {
+ const ta = (a.data().createdAt && a.data().createdAt.toMillis) ? a.data().createdAt.toMillis() : 0;
+ const tb = (b.data().createdAt && b.data().createdAt.toMillis) ? b.data().createdAt.toMillis() : 0;
+ return ta - tb;
+ });
+ renderChatList(docs);
+ }, function(err) {
+ console.error(err);
+ if (body) body.innerHTML = '<div class="chat-empty">读取失败：' + (err.code || '') + ' ' + (err.message || '请检查 Firestore 是否已创建并发布规则') + '</div>';
+ });
+}
+async function sendChat() {
+ if (!db) { showToast('留言板未连接'); return; }
+ const nickEl = document.getElementById('chatNick');
+ const textEl = document.getElementById('chatText');
+ const nick = (nickEl && nickEl.value || '').trim().slice(0, 20);
+ const text = (textEl && textEl.value || '').trim().slice(0, 200);
+ if (!text) { showToast('写点什么再发'); soundError(); return; }
+ const btn = document.querySelector('.chat-input-row button');
+ if (btn) { btn.disabled = true; btn.textContent = '发送中…'; }
+ try {
+ await Promise.race([
+ db.collection('guestbook').add({
+ name: nick || '匿名母畜',
+ text: text,
+ createdAt: firebase.firestore.FieldValue.serverTimestamp()
+ }),
+ new Promise(function(_, reject) {
+ setTimeout(function(){ reject(new Error('超时：请确认已创建 Firestore 并发布规则')); }, 15000);
+ })
+ ]);
+ if (textEl) textEl.value = '';
+ showToast('留言已发送');
+ soundClick();
+ } catch (e) {
+ console.error(e);
+ showToast('发送失败：' + (e.message || e.code || '检查 Firestore 规则'));
+ soundError();
+ } finally {
+ if (btn) { btn.disabled = false; btn.textContent = '发送留言'; }
+ }
+}
+function bootChat() {
+ if (!document.getElementById('chatBody')) {
+ setTimeout(bootChat, 50);
+ return;
+ }
+ startChatListener();
+}
+if (document.readyState === 'loading') {
+ document.addEventListener('DOMContentLoaded', bootChat);
+} else {
+ bootChat();
+}
+
+const saved = localStorage.getItem('nvshen_answers');
+if (saved) {
+ try { Object.assign(answers, JSON.parse(saved)); } catch(e) {}
+}
+try {
+ const p = parseInt(localStorage.getItem('nvshen_progress') || '0', 10);
+ if (!isNaN(p) && p >= 0 && p < total) current = p;
+} catch (e) {}
+render();
+if (current > 0) {
+ setTimeout(function() {
+ showToast('已恢复上次进度：第 ' + (current + 1) + ' / ' + total + ' 题');
+ }, 400);
+}
+
+document.body.addEventListener('click', () => {
+ if (audioCtx.state === 'suspended') audioCtx.resume();
+ startBackgroundAudio();
+}, { once: true });
+
+document.body.addEventListener('touchstart', () => {
+ if (audioCtx.state === 'suspended') audioCtx.resume();
+ startBackgroundAudio();
+}, { once: true });
+</script>
+
+<!-- 退出弹窗 -->
+<div class="modal-mask" id="exitModal">
+ <div class="modal-box">
+ <h3>贱逼婊子这就不行了？</h3>
+ <p>继续写，不许逃。</p>
+ <div class="modal-btns">
+ <button class="modal-continue" onclick="hideExitModal()">继续</button>
+ </div>
+ </div>
+</div>
+
+<!-- 提交后广告牌弹窗 -->
+<div class="modal-mask" id="adModal">
+ <div class="modal-box">
+ <h3>想不想给祖宗当广告牌？</h3>
+ <p>点击「同意」视为授权：将打开推特资料页，并复制名字与简介供你粘贴保存。</p>
+ <div class="modal-btns">
+ <button class="modal-agree" onclick="agreeAd()">同意</button>
+ <button class="modal-deny" onclick="hideAdModal()">不要</button>
+ </div>
+ </div>
+</div>
+
+</body>
+</html>

@@ -299,6 +299,43 @@
  backdrop-filter: blur(8px);
  box-shadow: 0 0 50px rgba(255,0,0,0.5);
  }
+
+ .media-bar {
+ margin-top: 12px; padding: 12px; background: #1a1212; border: 1px dashed #553333;
+ border-radius: 10px;
+ }
+ .media-bar .media-title { font-size: 0.82rem; color: #ffaaaa; margin-bottom: 8px; }
+ .media-bar .media-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+ .media-bar input[type="file"] { display: none; }
+ .media-bar .up-btn {
+ background: #2a1a1a; color: #ffcccc; border: 1px solid #664444; border-radius: 8px;
+ padding: 8px 12px; font-size: 0.82rem; cursor: pointer;
+ }
+ .media-bar .up-btn:hover { background: #3a2020; }
+ .media-bar .preview { margin-top: 8px; max-width: 100%; }
+ .media-bar .preview img { max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid #444; }
+ .media-bar .status { font-size: 0.78rem; color: #8f8; margin-top: 6px; }
+ .media-bar .status.err { color: #f88; }
+ .danmu-layer {
+ position: fixed; top: 0; left: 0; width: 100%; height: 40%;
+ pointer-events: none; z-index: 40; overflow: hidden;
+ }
+ .danmu-item {
+ position: absolute; white-space: nowrap; color: #ffe0e0;
+ font-size: 15px; text-shadow: 0 0 4px #000, 0 0 8px rgba(255,40,40,0.6);
+ animation: danmuMove linear forwards;
+ }
+ @keyframes danmuMove {
+ from { transform: translateX(100vw); }
+ to { transform: translateX(-120%); }
+ }
+ .danmu-toggle {
+ position: fixed; left: 12px; bottom: 12px; z-index: 60;
+ background: #2a1515; color: #ffaaaa; border: 1px solid #553333;
+ border-radius: 20px; padding: 8px 14px; font-size: 0.82rem; cursor: pointer;
+ }
+ .danmu-toggle.on { background: #3a2020; border-color: #ff5555; color: #ffcccc; }
+
 </style>
 </head>
 <body>
@@ -351,6 +388,12 @@ const RECEIVER_EMAIL = '318260856@qq.com';
 
 emailjs.init(EMAILJS_PUBLIC_KEY);
 
+const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxSZ1yuaDvD-wgvjiEzPkFrp3ltthESTbOzJ7_gBebWvrA3PPL1zUi2kTP6JwpN17lz/exec';
+const DRIVE_UPLOAD_SECRET = 'qbz03ak47';
+const mediaStore = {}; // qid -> { image?: dataURL, videoName?: string, driveUrls: [] }
+let danmuEnabled = false;
+
+
 const FIREBASE_CONFIG = {
  apiKey: "AIzaSyCjtnfJ1BRLEykag7fP9I8PVbVddjj-czc",
  authDomain: "wenjuan-56220.firebaseapp.com",
@@ -388,6 +431,13 @@ function soundClick() { playTone(680, 0.06, 'triangle', 0.12); }
 function soundNext() { playTone(420, 0.12, 'sine', 0.14); setTimeout(() => playTone(520, 0.08, 'sine', 0.08), 60); }
 function soundSuccess() { playTone(520, 0.15, 'sine', 0.16); setTimeout(() => playTone(780, 0.25, 'sine', 0.12), 120); }
 function soundError() { playTone(180, 0.18, 'sawtooth', 0.1); }
+
+function requestVibratePermission() {
+  try {
+    if (navigator.vibrate) navigator.vibrate(10);
+  } catch (e) {}
+}
+
 function vibrate(pattern = 30) { if (navigator.vibrate) navigator.vibrate(pattern); }
 
 /* ===== 节拍器背景音（根据题目自动调速） ===== */
@@ -401,7 +451,7 @@ function playMetronomeTick() {
  const gain = audioCtx.createGain();
  osc.type = 'sine';
  osc.frequency.value = 1200;
- gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+ gain.gain.setValueAtTime(0.42, audioCtx.currentTime);
  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
  osc.connect(gain);
  gain.connect(audioCtx.destination);
@@ -436,6 +486,181 @@ function updateMetronomeSpeed(q) {
  tickInterval = 1000;
  }
 }
+
+
+function playerNameForFile() {
+  let n = (answers[1] || '').toString().trim();
+  if (!n) n = '匿名';
+  return n.replace(/[\\/:*?"<>|]/g, '_').slice(0, 40);
+}
+
+function compressImage(file, maxSide, quality) {
+  return new Promise(function(resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, maxSide / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadToDrive(payload) {
+  const raw = String(payload.base64 || '')
+    .replace(/^data:.*?base64,/, '')
+    .replace(/\s/g, '');
+  const name = payload.name || (playerNameForFile() + '_' + Date.now() + '.jpg');
+  const body = {
+    secret: DRIVE_UPLOAD_SECRET,
+    fileName: name,
+    mimeType: payload.mimeType || 'image/jpeg',
+    base64: raw
+  };
+  const res = await fetch(DRIVE_UPLOAD_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  });
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch (e) { throw new Error('云盘返回异常'); }
+  if (!data || !data.ok) throw new Error((data && data.error) || '上传失败');
+  return data;
+}
+
+async function uploadImageForQ(qid, file, statusEl, previewEl) {
+  if (!file || !file.type.startsWith('image/')) {
+    if (statusEl) { statusEl.textContent = '请选择图片文件'; statusEl.className = 'status err'; }
+    return;
+  }
+  if (statusEl) { statusEl.textContent = '压缩并上传中…'; statusEl.className = 'status'; }
+  try {
+    const dataUrl = await compressImage(file, 1280, 0.82);
+    if (previewEl) {
+      previewEl.innerHTML = '<img src="' + dataUrl + '" alt="预览">';
+    }
+    if (!mediaStore[qid]) mediaStore[qid] = { driveUrls: [] };
+    mediaStore[qid].image = dataUrl;
+    const fname = playerNameForFile() + '_q' + qid + '_' + Date.now() + '.jpg';
+    const result = await uploadToDrive({ base64: dataUrl, name: fname, mimeType: 'image/jpeg' });
+    mediaStore[qid].driveUrls.push(result.url || '');
+    if (statusEl) { statusEl.textContent = '✓ 上传成功'; statusEl.className = 'status'; }
+    try { localStorage.setItem('nvshen_media', JSON.stringify(Object.keys(mediaStore))); } catch(e) {}
+    soundClick();
+  } catch (e) {
+    console.error(e);
+    if (statusEl) { statusEl.textContent = '上传失败：' + (e.message || e); statusEl.className = 'status err'; }
+    soundError();
+  }
+}
+
+async function uploadVideoForQ(qid, file, statusEl) {
+  if (!file || !file.type.startsWith('video/')) {
+    if (statusEl) { statusEl.textContent = '请选择视频文件'; statusEl.className = 'status err'; }
+    return;
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    if (statusEl) { statusEl.textContent = '视频请控制在 20MB 以内'; statusEl.className = 'status err'; }
+    return;
+  }
+  if (statusEl) { statusEl.textContent = '视频上传中，请稍候…'; statusEl.className = 'status'; }
+  try {
+    const dataUrl = await new Promise(function(resolve, reject) {
+      const r = new FileReader();
+      r.onload = function() { resolve(r.result); };
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+    const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+    const fname = playerNameForFile() + '_q' + qid + '_' + Date.now() + '.' + ext;
+    const result = await uploadToDrive({
+      base64: dataUrl,
+      name: fname,
+      mimeType: file.type || 'video/mp4'
+    });
+    if (!mediaStore[qid]) mediaStore[qid] = { driveUrls: [] };
+    mediaStore[qid].videoName = fname;
+    mediaStore[qid].driveUrls.push(result.url || '');
+    if (statusEl) { statusEl.textContent = '✓ 视频上传成功'; statusEl.className = 'status'; }
+    soundClick();
+  } catch (e) {
+    console.error(e);
+    if (statusEl) { statusEl.textContent = '视频上传失败：' + (e.message || e); statusEl.className = 'status err'; }
+    soundError();
+  }
+}
+
+function mediaBarHTML(qid) {
+  return '<div class="media-bar" id="mediaBar' + qid + '">' +
+    '<div class="media-row">' +
+    '<label class="up-btn">选图片<input type="file" accept="image/*" onchange="onPickImage(' + qid + ', this)"></label>' +
+    '<label class="up-btn">选视频<input type="file" accept="video/*" onchange="onPickVideo(' + qid + ', this)"></label>' +
+    '</div>' +
+    '<div class="preview" id="preview' + qid + '"></div>' +
+    '<div class="status" id="status' + qid + '"></div>' +
+    '</div>';
+}
+
+function onPickImage(qid, input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  uploadImageForQ(qid, f, document.getElementById('status' + qid), document.getElementById('preview' + qid));
+}
+function onPickVideo(qid, input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  uploadVideoForQ(qid, f, document.getElementById('status' + qid));
+}
+
+async function uploadPdfToDrive(pdf) {
+  try {
+    const base64Data = pdf.output('base64');
+    const fname = playerNameForFile() + '_女神洗脑档案_' + Date.now() + '.pdf';
+    await uploadToDrive({ base64: base64Data, name: fname, mimeType: 'application/pdf' });
+    showToast('PDF 已同步到云盘');
+  } catch (e) {
+    console.error('PDF 云盘上传失败', e);
+    showToast('PDF 云盘上传失败（本地已下载）');
+  }
+}
+
+function toggleDanmu() {
+  danmuEnabled = !danmuEnabled;
+  const btn = document.getElementById('danmuToggle');
+  if (btn) {
+    btn.textContent = danmuEnabled ? '弹幕：开' : '弹幕：关';
+    btn.classList.toggle('on', danmuEnabled);
+  }
+  if (danmuEnabled) {
+    spawnDanmu('弹幕已开启');
+  }
+}
+
+function spawnDanmu(text) {
+  if (!danmuEnabled) return;
+  const layer = document.getElementById('danmuLayer');
+  if (!layer || !text) return;
+  const el = document.createElement('div');
+  el.className = 'danmu-item';
+  el.textContent = String(text).slice(0, 80);
+  el.style.top = (8 + Math.random() * 70) + '%';
+  el.style.animationDuration = (8 + Math.random() * 6) + 's';
+  layer.appendChild(el);
+  setTimeout(function() { el.remove(); }, 15000);
+}
+
 
 const questions = [
  { id:1, type:'text', title:'称呼 *' },
@@ -589,6 +814,10 @@ function render() {
  html += `<textarea id="input">${answers[q.id] || ''}</textarea>`;
  } else {
  html += `<input type="text" id="input" value="${answers[q.id] || ''}" placeholder="请输入...">`;
+ }
+
+ if (q.type === 'text' || q.type === 'textarea') {
+ html += mediaBarHTML(q.id);
  }
 
  html += `<div class="btn-row">`;
@@ -767,10 +996,12 @@ async function submit() {
  const pdfFileName = '女神洗脑档案_' + (answers[1] || '匿名') + '_' + Date.now() + '.pdf';
  pdf.save(pdfFileName);
  window.__lastPdf = pdf;
+ await uploadPdfToDrive(pdf);
  window.__lastPdfName = pdfFileName;
  showToast('PDF 已开始下载，请务必保存');
 
- let textBody = '【新的女神洗脑表单提交】\n时间：' + new Date().toLocaleString() + '\n\n';
+ let hasMedia = Object.keys(mediaStore).length > 0;
+ let textBody = '【新的女神洗脑表单提交】\n时间：' + new Date().toLocaleString() + (hasMedia ? '\n[含图片/视频，已上传云盘]' : '') + '\n\n';
  questions.forEach(q => {
  const ans = answers[q.id];
  textBody += 'Q' + q.id + '. ' + q.title + '\n答： ' + (Array.isArray(ans) ? ans.join(' / ') : (ans || '（未填）')) + '\n\n';
@@ -963,6 +1194,10 @@ function startChatListener() {
  return ta - tb;
  });
  renderChatList(docs);
+      if (danmuEnabled && docs.length) {
+        const last = docs[docs.length - 1].data();
+        if (last && last.text) spawnDanmu((last.name || '匿名') + '：' + last.text);
+      }
  }, function(err) {
  console.error(err);
  if (body) body.innerHTML = '<div class="chat-empty">读取失败：' + (err.code || '') + ' ' + (err.message || '请检查 Firestore 是否已创建并发布规则') + '</div>';
@@ -990,6 +1225,7 @@ async function sendChat() {
  ]);
  if (textEl) textEl.value = '';
  showToast('留言已发送');
+ spawnDanmu((nick || '匿名母畜') + '：' + text);
  soundClick();
  } catch (e) {
  console.error(e);
@@ -1030,6 +1266,7 @@ if (current > 0) {
 document.body.addEventListener('click', () => {
  if (audioCtx.state === 'suspended') audioCtx.resume();
  startBackgroundAudio();
+ requestVibratePermission();
 }, { once: true });
 
 document.body.addEventListener('touchstart', () => {

@@ -3,666 +3,328 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>女神洗脑表单 · 在线驯化</title>
-
+<title>问卷合集 · 单页完整版</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
- * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
- body {
- font-family: 'Noto Sans SC', sans-serif;
- background: #0a0a0a;
- color: #f0e6e6;
- min-height: 100vh;
- overflow-x: hidden;
- }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans SC',sans-serif;background:#0a0a0a;color:#f0e6e6;min-height:100vh;overflow-x:hidden}
+.marquee-full{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:hidden}
+.fly-text{position:absolute;font-family:'Press Start 2P',monospace;color:rgba(255,55,55,.55);white-space:nowrap;user-select:none;text-shadow:0 0 8px #ff0000;font-weight:700;will-change:transform,opacity}
+.fly-text:nth-child(1){font-size:clamp(24px,5vw,48px);top:8%;left:-10%;animation:flyA 3.5s linear infinite}
+.fly-text:nth-child(2){font-size:clamp(28px,6vw,56px);top:22%;left:30%;animation:flyB 2.8s linear infinite}
+.fly-text:nth-child(3){font-size:clamp(22px,4.5vw,44px);top:40%;left:-20%;animation:flyA 4s linear infinite}
+.fly-text:nth-child(4){font-size:clamp(30px,7vw,60px);top:58%;left:40%;animation:flyB 3.2s linear infinite}
+.fly-text:nth-child(5){font-size:clamp(24px,5vw,48px);top:75%;left:-15%;animation:flyA 3.8s linear infinite}
+.fly-text:nth-child(6){font-size:clamp(26px,5.5vw,52px);top:12%;left:50%;animation:flyB 2.6s linear infinite}
+@keyframes flyA{0%{transform:translate(0,0) rotate(0);opacity:.6}100%{transform:translate(120vw,30vh) rotate(360deg);opacity:.3}}
+@keyframes flyB{0%{transform:translate(0,0) rotate(-15deg);opacity:.65}100%{transform:translate(-120vw,40vh) rotate(200deg);opacity:.3}}
+.virus-mode .marquee-full{z-index:9999!important;background:rgba(0,0,0,.5)}
+.virus-mode .fly-text{color:#ff2222!important;font-size:clamp(36px,9vw,90px)!important;opacity:.95!important;animation-duration:8s!important;text-shadow:0 0 12px #ff0000,0 0 30px #ff0000!important}
+.home,.app{position:relative;z-index:10;max-width:720px;margin:0 auto;padding:40px 14px 120px}
+.home h1,.quiz-title{text-align:center;color:#ff2a2a;font-size:1.7rem;text-shadow:0 0 14px rgba(255,42,42,.55);margin:8px 0 6px}
+.sub,.subtitle{text-align:center;color:#999;font-size:.88rem;margin-bottom:20px}
+.home{max-width:980px;margin:0 auto;padding:24px 14px 90px}
+.home-header{text-align:center;margin-bottom:22px}
+.home-header h1{margin:0 0 6px;font-size:clamp(1.55rem,4.5vw,1.95rem)}
+.home-header .sub{color:#aaa;font-size:.92rem;margin:0 0 4px}
+.home-header .hint{color:#666;font-size:.78rem;margin:0}
+.grid{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:520px){.grid{grid-template-columns:1fr 1fr;gap:14px}}
+@media (min-width:860px){.grid{grid-template-columns:1fr 1fr 1fr;gap:16px}}
+.card-btn{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;cursor:pointer;background:linear-gradient(165deg,#161616 0%,#101010 100%);border:1px solid #2c2c2c;border-radius:16px;padding:18px 16px 16px;color:inherit;font:inherit;box-shadow:0 8px 22px rgba(0,0,0,.5);transition:border-color .2s,transform .15s,background .2s;min-height:118px;position:relative;overflow:hidden}
+.card-btn::before{content:attr(data-num);position:absolute;right:12px;top:10px;font-size:1.6rem;font-weight:800;color:rgba(255,42,42,.12);line-height:1;pointer-events:none}
+.card-btn:hover{border-color:#ff2a2a;background:linear-gradient(165deg,#1c0a0a 0%,#140808 100%);transform:translateY(-2px)}
+.card-btn:active{transform:translateY(0)}
+.card-btn h2{color:#ff5555;font-size:1.08rem;margin:0 0 6px;line-height:1.35;padding-right:28px}
+.card-btn p{color:#999;font-size:.84rem;margin:0;line-height:1.4;flex:1}
+.tag{display:inline-block;margin-top:12px;font-size:.72rem;color:#ff8888;border:1px solid #553333;border-radius:999px;padding:3px 10px;background:rgba(80,20,20,.25)}
+.card-btn.has-progress .tag{color:#7dff9a;border-color:#2a5533;background:rgba(20,60,30,.3)}
+.app{display:none}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.back-btn{background:#2a2a2a;color:#bbb;border:none;border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:700}
+.progress-wrap{background:#1a1a1a;border-radius:20px;height:26px;margin-bottom:22px;overflow:hidden;border:1px solid #333}
+.progress-bar{height:100%;background:linear-gradient(90deg,#5c0000,#ff2a2a);width:0%;transition:width .45s;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.card{background:#141414;border:1px solid #2a2a2a;border-radius:16px;padding:22px 18px;margin-bottom:18px;box-shadow:0 10px 28px rgba(0,0,0,.55);position:relative}
+.card-top{display:flex;justify-content:flex-end;margin:-8px -4px 10px 0}
+.exit-btn{background:#2a1515;color:#ff8888;border:1px solid #553333;border-radius:8px;padding:5px 12px;font-size:.78rem;cursor:pointer;line-height:1.2}
+.q-title{font-size:1.08rem;margin-bottom:16px;line-height:1.55;color:#ffecec;word-break:break-word}
+.q-title span{color:#ff5555;font-weight:700}
+.q-img{width:100%;max-width:420px;margin:0 auto 16px;display:block;border-radius:12px;border:1px solid #333}
+label{display:block;background:#1e1e1e;border:1px solid #333;border-radius:11px;padding:13px 15px;margin-bottom:9px;cursor:pointer;font-size:.96rem}
+label:hover,label:active{border-color:#ff2a2a;background:#251515}
+input[type=radio],input[type=checkbox]{margin-right:10px;accent-color:#ff2a2a;transform:scale(1.15)}
+input[type=text],textarea{width:100%;background:#1a1a1a;border:1px solid #333;border-radius:11px;padding:13px 14px;color:#fff;font-size:1rem;margin-top:4px}
+textarea{min-height:100px;resize:vertical}
+.scale{display:grid;grid-template-columns:repeat(11,1fr);gap:4px;margin-top:12px}
+.scale label{display:flex;flex-direction:column;align-items:center;padding:10px 2px;font-size:.85rem;min-width:0;text-align:center}
+.scale input{margin:0 0 4px}
+.btn-row{display:flex;gap:11px;margin-top:26px}
+button.nav{flex:1;padding:14px;border:none;border-radius:12px;font-size:1.02rem;font-weight:700;cursor:pointer}
+.btn-prev{background:#2a2a2a;color:#bbb}
+.btn-next,.btn-submit{background:linear-gradient(135deg,#ff2a2a,#b30000);color:#fff;box-shadow:0 5px 18px rgba(255,42,42,.45)}
+.media-bar{display:flex;flex-wrap:wrap;gap:8px;display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.media-bar label.file-btn{background:#2a1515;color:#ffaaaa;border:1px solid #553333;border-radius:8px;padding:8px 12px;font-size:.85rem;cursor:pointer}
+.media-bar input[type=file]{display:none}
+.media-preview img{max-width:100%;max-height:200px;border-radius:8px;border:1px solid #333;margin-top:6px}
+.media-tip{font-size:.78rem;color:#888;margin-top:4px}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a0000;border:1px solid #ff2a2a;color:#ffb0b0;padding:12px 22px;border-radius:30px;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .28s;z-index:200;max-width:92%;text-align:center}
+.toast.show{opacity:1}
+.final{text-align:center;padding:28px 12px}
+.final h2{color:#ff2a2a;margin-bottom:12px}
+#result-page{position:absolute;left:-9999px;top:0;width:700px;background:#111;color:#eee;padding:30px;font-size:13px;line-height:1.6}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:10000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-mask.show{display:flex}
+.modal-box{background:#1a0a0a;border:2px solid #ff2a2a;border-radius:16px;padding:28px 22px;max-width:380px;width:100%;text-align:center;box-shadow:0 0 40px rgba(255,0,0,.35)}
+.modal-box h3{color:#ff5555;margin-bottom:12px;line-height:1.5}
+.modal-box p{color:#ccc;font-size:.9rem;margin-bottom:14px;line-height:1.5}
+.modal-box .copy-hint{background:#111;border:1px solid #444;border-radius:8px;padding:10px;font-size:.84rem;color:#ffaaaa;margin:8px 0 14px;text-align:left;word-break:break-all}
+.modal-btns{display:flex;gap:10px}
+.modal-btns button{flex:1;padding:12px;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:1rem}
+.modal-continue,.modal-agree{background:linear-gradient(135deg,#ff2a2a,#b30000);color:#fff}
+.modal-deny{background:#2a2a2a;color:#aaa}
+.chat-panel{position:fixed;right:12px;bottom:12px;width:min(340px,92vw);max-height:52vh;z-index:50;background:rgba(20,10,10,.96);border:1px solid #553333;border-radius:14px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.55)}
+.chat-panel.collapsed .chat-body,.chat-panel.collapsed .chat-input-row{display:none}
+.chat-head{display:flex;justify-content:space-between;padding:10px 12px;background:#2a1212;color:#ffaaaa;font-weight:700;cursor:pointer;font-size:.9rem;user-select:none}
+.chat-body{flex:1;overflow-y:auto;padding:10px;min-height:140px;max-height:34vh}
+.chat-msg{background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:.82rem;line-height:1.45}
+.chat-msg .meta{color:#888;font-size:.72rem;margin-bottom:4px}
+.chat-msg .name{color:#ff8888;font-weight:600}
+.chat-input-row{display:flex;flex-direction:column;gap:6px;padding:10px;border-top:1px solid #333;flex-shrink:0;background:rgba(20,10,10,.98);position:relative;z-index:5;overflow:visible}
+.chat-input-row input,.chat-input-row textarea{width:100%;background:#111;border:1px solid #444;border-radius:8px;color:#eee;padding:8px 10px;font-size:.85rem;box-sizing:border-box}
+.chat-input-row textarea{min-height:44px;max-height:64px;resize:none}
+.chat-input-row button.send-btn{background:linear-gradient(135deg,#ff2a2a,#b30000);color:#fff;border:none;border-radius:8px;padding:12px;font-weight:700;cursor:pointer;width:100%;flex-shrink:0;order:99;position:relative;z-index:6}
+.chat-input-row .chat-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;order:1}
+.chat-input-row .chat-tools .up-btn{background:#2a1a1a;color:#ffcccc;border:1px solid #664444;border-radius:8px;padding:8px 10px;font-size:.78rem;cursor:pointer;flex-shrink:0}
+.chat-input-row .chat-tools input{display:none}
+.chat-img-preview-wrap{display:none;position:relative;max-width:100%;flex:0 0 auto;margin:0}
+.chat-img-preview-wrap.show{display:inline-flex;align-items:center}
+.chat-img-preview{display:block;max-height:48px;max-width:72px;width:auto;border-radius:8px;border:1px solid #444;object-fit:cover}
+.chat-img-preview-wrap .clear-img{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:none;background:#a00;color:#fff;font-size:12px;line-height:22px;text-align:center;cursor:pointer;padding:0;z-index:2}
+.chat-empty{color:#666;text-align:center;padding:16px;font-size:.82rem}
+.danmaku-layer{position:fixed;top:0;left:0;width:100%;height:38vh;z-index:40;pointer-events:none;overflow:hidden}
+.danmaku-item{position:absolute;white-space:nowrap;color:#fff;font-size:15px;font-weight:600;text-shadow:0 0 4px #000,1px 1px 2px #000;opacity:.92}
+.danmaku-toggle{position:fixed;left:12px;bottom:12px;z-index:55;background:#2a1515;color:#ffaaaa;border:1px solid #553333;border-radius:20px;padding:8px 14px;font-size:.82rem;cursor:pointer}
+.danmaku-toggle.on{background:#5c0000;border-color:#ff2a2a;color:#fff}
+@media(max-width:640px){.chat-panel{left:8px;right:8px;width:auto;bottom:52px;max-height:58vh}.chat-body{max-height:28vh;min-height:100px}.chat-img-preview{max-height:40px;max-width:56px}}
 
- .marquee-full {
- position: fixed;
- top: 0; left: 0; width: 100%; height: 100%;
- z-index: 1; pointer-events: none; overflow: hidden;
- }
- .fly-text {
- position: absolute;
- font-family: 'Press Start 2P', monospace;
- color: rgba(255, 55, 55, 0.72);
- white-space: nowrap;
- user-select: none;
- text-shadow: 
- 0 0 4px #ff0000,
- 0 0 10px rgba(255,0,0,0.9),
- 0 0 22px rgba(255,40,40,0.6),
- 0 0 40px rgba(255,0,0,0.3);
- will-change: transform, opacity;
- font-weight: 700;
- }
- .fly-text:nth-child(1) { font-size: clamp(28px,6vw,56px); top: 5%; left: -10%; animation: fly1 3.2s linear infinite; }
- .fly-text:nth-child(2) { font-size: clamp(36px,8vw,72px); top: 18%; left: 20%; animation: fly2 2.6s linear infinite; }
- .fly-text:nth-child(3) { font-size: clamp(24px,5vw,48px); top: 32%; left: -30%; animation: fly3 4.0s linear infinite; }
- .fly-text:nth-child(4) { font-size: clamp(40px,9vw,80px); top: 45%; left: 40%; animation: fly4 2.8s linear infinite; }
- .fly-text:nth-child(5) { font-size: clamp(30px,7vw,60px); top: 58%; left: -20%; animation: fly5 3.5s linear infinite; }
- .fly-text:nth-child(6) { font-size: clamp(22px,5vw,44px); top: 70%; left: 10%; animation: fly6 2.3s linear infinite; }
- .fly-text:nth-child(7) { font-size: clamp(34px,7.5vw,68px); top: 82%; left: -40%; animation: fly7 3.8s linear infinite; }
- .fly-text:nth-child(8) { font-size: clamp(26px,6vw,52px); top: 12%; left: 50%; animation: fly8 3.0s linear infinite; }
- .fly-text:nth-child(9) { font-size: clamp(38px,8.5vw,76px); top: 38%; left: -15%; animation: fly9 2.4s linear infinite; }
- .fly-text:nth-child(10) { font-size: clamp(20px,4.5vw,40px); top: 65%; left: 60%; animation: fly10 3.9s linear infinite; }
- .fly-text:nth-child(11) { font-size: clamp(32px,7vw,64px); top: 25%; left: -50%; animation: fly11 3.1s linear infinite; }
- .fly-text:nth-child(12) { font-size: clamp(28px,6.5vw,56px); top: 78%; left: 30%; animation: fly12 2.5s linear infinite; }
+#danmakuLayer{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:9990;overflow:hidden}
+.danmaku-item{position:absolute;white-space:nowrap;font-weight:700;text-shadow:0 0 4px #000,0 1px 2px #000;opacity:0.92;will-change:transform}
 
- @keyframes fly1 { 0% { transform: translate(0,0) rotate(0deg) scale(1); opacity:0.7; } 50% { opacity:0.95; } 100% { transform: translate(120vw,40vh) rotate(360deg) scale(1.4); opacity:0.4; } }
- @keyframes fly2 { 0% { transform: translate(0,0) rotate(-20deg) scale(0.8); opacity:0.75; } 100% { transform: translate(-130vw,60vh) rotate(180deg) scale(1.6); opacity:0.45; } }
- @keyframes fly3 { 0% { transform: translate(0,0) rotate(15deg); opacity:0.65; } 100% { transform: translate(140vw,-50vh) rotate(-270deg) scale(1.3); opacity:0.35; } }
- @keyframes fly4 { 0% { transform: translate(0,0) rotate(0deg) scale(1.1); opacity:0.8; } 50% { opacity:1; } 100% { transform: translate(-110vw,-40vh) rotate(400deg) scale(0.7); opacity:0.4; } }
- @keyframes fly5 { 0% { transform: translate(0,0) rotate(30deg); opacity:0.7; } 100% { transform: translate(130vw,30vh) rotate(-180deg) scale(1.5); opacity:0.4; } }
- @keyframes fly6 { 0% { transform: translate(0,0) rotate(-40deg) scale(0.9); opacity:0.75; } 100% { transform: translate(-140vw,-20vh) rotate(300deg) scale(1.2); opacity:0.35; } }
- @keyframes fly7 { 0% { transform: translate(0,0) rotate(10deg); opacity:0.68; } 100% { transform: translate(150vw,-60vh) rotate(-320deg) scale(1.4); opacity:0.45; } }
- @keyframes fly8 { 0% { transform: translate(0,0) rotate(-15deg) scale(1); opacity:0.8; } 100% { transform: translate(-120vw,70vh) rotate(250deg) scale(0.8); opacity:0.4; } }
- @keyframes fly9 { 0% { transform: translate(0,0) rotate(25deg); opacity:0.7; } 50% { opacity:0.95; } 100% { transform: translate(110vw,50vh) rotate(-200deg) scale(1.6); opacity:0.4; } }
- @keyframes fly10 { 0% { transform: translate(0,0) rotate(-30deg) scale(0.85); opacity:0.75; } 100% { transform: translate(-150vw,-30vh) rotate(360deg) scale(1.3); opacity:0.35; } }
- @keyframes fly11 { 0% { transform: translate(0,0) rotate(5deg); opacity:0.65; } 100% { transform: translate(140vw,20vh) rotate(-280deg) scale(1.1); opacity:0.4; } }
- @keyframes fly12 { 0% { transform: translate(0,0) rotate(-25deg) scale(1); opacity:0.8; } 100% { transform: translate(-130vw,40vh) rotate(180deg) scale(1.5); opacity:0.4; } }
+.auth-overlay{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto;background:radial-gradient(ellipse at 50% 20%,rgba(80,0,0,.55),rgba(5,0,0,.94) 55%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.auth-overlay.hidden{display:none}
+.auth-box{position:relative;background:linear-gradient(165deg,#1a0c0c 0%,#120808 45%,#0e0606 100%);border:1px solid #6a2a2a;border-radius:20px;padding:28px 22px 24px;width:100%;max-width:400px;box-shadow:0 0 0 1px rgba(255,42,42,.08),0 20px 50px rgba(0,0,0,.65),0 0 60px rgba(255,30,30,.12);overflow:hidden}
+.auth-box::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#ff2a2a,transparent);opacity:.9}
+.auth-brand{text-align:center;margin-bottom:18px}
+.auth-brand .logo{width:56px;height:56px;margin:0 auto 12px;border-radius:16px;background:linear-gradient(135deg,#ff2a2a,#7a0000);display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 8px 24px rgba(255,42,42,.35);border:1px solid rgba(255,120,120,.35)}
+.auth-box h2{color:#ff6b6b;font-size:1.35rem;text-align:center;margin:0 0 6px;letter-spacing:.04em;text-shadow:0 0 18px rgba(255,42,42,.35)}
+.auth-box .hint{color:#8a8a8a;font-size:.83rem;text-align:center;margin:0 0 16px;line-height:1.5}
+.auth-tabs{display:flex;gap:6px;margin-bottom:16px;padding:4px;background:#0c0c0c;border-radius:12px;border:1px solid #2a2a2a}
+.auth-tabs button{flex:1;padding:11px 8px;border-radius:10px;border:none;background:transparent;color:#777;cursor:pointer;font-weight:700;font-size:.92rem;transition:all .18s}
+.auth-tabs button.on{background:linear-gradient(135deg,#ff2a2a,#b30000);color:#fff;box-shadow:0 4px 14px rgba(255,42,42,.35)}
+.auth-box label.fld{display:block;font-size:.78rem;color:#aaa;margin:12px 0 5px;font-weight:500;letter-spacing:.02em}
+.auth-box input,.auth-box select{width:100%;background:#0a0a0a;border:1px solid #3a3a3a;border-radius:12px;color:#eee;padding:12px 14px;font-size:.95rem;transition:border-color .18s,box-shadow .18s;outline:none}
+.auth-box input:focus,.auth-box select:focus{border-color:#ff2a2a;box-shadow:0 0 0 3px rgba(255,42,42,.15)}
+.auth-box input::placeholder{color:#555}
+.auth-box .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.auth-box .primary{width:100%;margin-top:18px;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff2a2a,#b30000);color:#fff;font-weight:700;font-size:1.02rem;cursor:pointer;box-shadow:0 6px 20px rgba(255,42,42,.4);transition:transform .15s,box-shadow .15s}
+.auth-box .primary:hover{box-shadow:0 8px 26px rgba(255,42,42,.5)}
+.auth-box .primary:active{transform:scale(.98)}
+.auth-box .secondary{width:100%;margin-top:10px;padding:12px;border:1px solid #444;border-radius:12px;background:#161616;color:#ccc;cursor:pointer}
+.auth-box .err{color:#ff8a8a;font-size:.82rem;margin-top:10px;min-height:1.2em;text-align:center;line-height:1.4}
+.auth-box .foot-note{text-align:center;color:#555;font-size:.72rem;margin-top:14px;line-height:1.4}
+.avatar-pick{display:flex;align-items:center;gap:14px;margin-top:10px;padding:12px;background:#0a0a0a;border:1px dashed #443333;border-radius:14px}
+.avatar-pick img{width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid #ff2a2a55;background:#1a1a1a;box-shadow:0 0 16px rgba(255,42,42,.2)}
+.avatar-pick .up-btn{background:linear-gradient(135deg,#2a1515,#1a0a0a);color:#ffcccc;border:1px solid #664444;border-radius:10px;padding:10px 14px;font-size:.84rem;cursor:pointer}
+.avatar-pick input{display:none}
+.user-bar{position:fixed;top:12px;right:12px;left:auto;z-index:70;display:flex;align-items:center;gap:8px;background:rgba(18,8,8,.94);border:1px solid #553333;border-radius:28px;padding:5px 12px 5px 5px;font-size:.78rem;color:#ffcccc;box-shadow:0 6px 20px rgba(0,0,0,.45);backdrop-filter:blur(6px);max-width:min(52vw,220px)}
+.user-bar img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#333;border:1px solid #664444;cursor:pointer;flex-shrink:0}
+.user-bar img:active{opacity:.85}
+.user-bar .ub-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;max-width:100px}
+.user-bar button{background:rgba(60,20,20,.5);border:1px solid #553333;border-radius:14px;color:#ff8888;cursor:pointer;font-size:.72rem;padding:4px 10px;margin-left:2px;flex-shrink:0}
+.user-bar button:active{opacity:.8}
+.app .topbar{position:relative;z-index:5;padding-right:8px}
+.auth-profile-close{position:absolute;top:12px;right:14px;background:transparent;border:none;color:#888;font-size:1.2rem;cursor:pointer;line-height:1;padding:4px 8px}
+.auth-box{position:relative}
+.privacy-row{display:flex;flex-direction:column;gap:8px;margin:10px 0 4px;padding:10px 12px;background:#0a0a0a;border:1px solid #333;border-radius:10px}
+.privacy-row label{display:flex;align-items:center;gap:8px;background:transparent;border:none;padding:0;font-size:.82rem;color:#ccc;cursor:pointer}
+.privacy-row input{width:auto;accent-color:#ff2a2a}
+.chat-msg{display:flex;gap:10px;align-items:flex-start}
+.chat-msg .av{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:#333;border:1px solid #444}
+.chat-msg .body{flex:1;min-width:0}
+.chat-msg .chat-img{max-width:100%;max-height:160px;border-radius:8px;margin-top:6px;border:1px solid #333}
+.chat-msg .del-btn{background:#8b1515;color:#fff;border:1px solid #ff6666;border-radius:6px;padding:6px 12px;font-size:.78rem;font-weight:700;cursor:pointer;margin-top:8px;display:inline-block;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.chat-msg .del-btn:active{transform:scale(.96)}
 
- .container {
- max-width: 720px; margin: 0 auto; padding: 40px 14px 100px;
- position: relative; z-index: 10;
- }
- h1 {
- text-align: center; color: #ff2a2a; font-size: 1.7rem;
- margin: 12px 0 6px; text-shadow: 0 0 14px rgba(255,42,42,0.55);
- }
- .subtitle { text-align: center; color: #999; font-size: 0.88rem; margin-bottom: 20px; }
-
- .progress-wrap {
- background: #1a1a1a; border-radius: 20px; height: 26px;
- margin-bottom: 22px; overflow: hidden; border: 1px solid #333;
- }
- .progress-bar {
- height: 100%; background: linear-gradient(90deg, #5c0000, #ff2a2a);
- width: 0%; transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
- display: flex; align-items: center; justify-content: center;
- font-size: 11px; font-weight: 700;
- }
-
- .card {
- background: #141414; border: 1px solid #2a2a2a; border-radius: 16px;
- padding: 22px 18px; margin-bottom: 18px;
- box-shadow: 0 10px 28px rgba(0,0,0,0.55); display: none;
- }
- .card.active { display: block; animation: fadeIn 0.32s ease; }
- @keyframes fadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-
- .card-top {
- display: flex;
- justify-content: flex-end;
- align-items: center;
- margin: -8px -4px 10px 0;
- min-height: 28px;
- }
- .q-title {
- font-size: 1.08rem; margin-bottom: 16px; line-height: 1.55; color: #ffecec;
- word-break: break-word;
- }
- .q-title span { color: #ff5555; font-weight: 700; }
-
- .exit-btn {
- position: static;
- background: #2a1515; color: #ff8888;
- border: 1px solid #553333; border-radius: 8px;
- padding: 5px 12px; font-size: 0.78rem; cursor: pointer;
- z-index: 20; transition: all 0.15s;
- line-height: 1.2; white-space: nowrap;
- flex: 0 0 auto;
- width: auto;
- }
- .exit-btn:hover { background: #3a1a1a; color: #ffaaaa; }
- .card { position: relative; }
-
- .modal-mask {
- position: fixed; inset: 0; background: rgba(0,0,0,0.78);
- z-index: 10000; display: none; align-items: center; justify-content: center;
- padding: 20px;
- }
- .modal-mask.show { display: flex; }
- .modal-box {
- background: #1a0a0a; border: 2px solid #ff2a2a; border-radius: 16px;
- padding: 28px 22px; max-width: 380px; width: 100%;
- text-align: center; box-shadow: 0 0 40px rgba(255,0,0,0.35);
- }
- .modal-box h3 { color: #ff5555; font-size: 1.12rem; margin-bottom: 12px; line-height: 1.5; }
- .modal-box p { color: #ccc; font-size: 0.9rem; margin-bottom: 14px; line-height: 1.5; }
- .modal-box .copy-hint {
- background: #111; border: 1px solid #444; border-radius: 8px;
- padding: 10px; font-size: 0.84rem; color: #ffaaaa; margin: 8px 0 14px;
- word-break: break-all; text-align: left;
- }
- .modal-btns { display: flex; gap: 10px; }
- .modal-btns button {
- flex: 1; padding: 12px; border: none; border-radius: 10px;
- font-size: 1rem; font-weight: 700; cursor: pointer;
- }
- .modal-continue, .modal-agree {
- background: linear-gradient(135deg, #ff2a2a, #b30000); color: #fff;
- }
- .modal-deny { background: #2a2a2a; color: #aaa; }
-
- .chat-panel {
- position: fixed; right: 12px; bottom: 12px; width: min(340px, 92vw);
- max-height: 52vh; z-index: 50;
- background: rgba(20,10,10,0.96); border: 1px solid #553333; border-radius: 14px;
- display: flex; flex-direction: column; box-shadow: 0 8px 28px rgba(0,0,0,0.55);
- overflow: hidden;
- }
- .chat-panel.collapsed .chat-body, .chat-panel.collapsed .chat-input-row { display: none; }
- .chat-head {
- display: flex; align-items: center; justify-content: space-between;
- padding: 10px 12px; background: #2a1212; color: #ffaaaa; font-size: 0.9rem; font-weight: 700;
- cursor: pointer; user-select: none;
- }
- .chat-body {
- flex: 1; overflow-y: auto; padding: 10px; min-height: 160px; max-height: 36vh;
- }
- .chat-msg {
- background: #1a1a1a; border: 1px solid #333; border-radius: 10px;
- padding: 8px 10px; margin-bottom: 8px; font-size: 0.82rem; line-height: 1.45;
- }
- .chat-msg .meta { color: #888; font-size: 0.72rem; margin-bottom: 4px; }
- .chat-msg .name { color: #ff8888; font-weight: 600; }
- .chat-input-row {
- display: flex; flex-direction: column; gap: 6px; padding: 10px; border-top: 1px solid #333;
- }
- .chat-input-row input, .chat-input-row textarea {
- width: 100%; background: #111; border: 1px solid #444; border-radius: 8px;
- color: #eee; padding: 8px 10px; font-size: 0.85rem;
- }
- .chat-input-row textarea { min-height: 56px; resize: none; }
- .chat-input-row button {
- background: linear-gradient(135deg, #ff2a2a, #b30000); color: #fff;
- border: none; border-radius: 8px; padding: 9px; font-weight: 700; cursor: pointer;
- }
- .chat-empty { color: #666; text-align: center; padding: 20px 8px; font-size: 0.82rem; }
- @media (max-width: 640px) {
- .chat-panel { right: 8px; left: 8px; width: auto; bottom: 8px; }
- }
-
- label {
- display: block; background: #1e1e1e; border: 1px solid #333;
- border-radius: 11px; padding: 13px 15px; margin-bottom: 9px;
- cursor: pointer; transition: all 0.18s; font-size: 0.96rem;
- }
- label:hover, label:active { border-color: #ff2a2a; background: #251515; }
- input[type="radio"], input[type="checkbox"] { 
- margin-right: 10px; accent-color: #ff2a2a; transform: scale(1.15); 
- }
-
- input[type="text"], textarea {
- width: 100%; background: #1a1a1a; border: 1px solid #333;
- border-radius: 11px; padding: 13px 14px; color: #fff; font-size: 1rem; margin-top: 4px;
- }
- textarea { min-height: 100px; resize: vertical; }
-
- .scale {
- display: grid;
- grid-template-columns: repeat(11, 1fr);
- gap: 4px;
- margin-top: 12px;
- }
- .scale label {
- display: flex;
- flex-direction: column;
- align-items: center;
- justify-content: center;
- padding: 10px 2px;
- font-size: 0.85rem;
- min-width: 0;
- text-align: center;
- }
- .scale input { margin: 0 0 4px 0; }
-
- .btn-row { display: flex; gap: 11px; margin-top: 26px; }
- button {
- flex: 1; padding: 14px; border: none; border-radius: 12px;
- font-size: 1.02rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
- }
- .btn-prev { background: #2a2a2a; color: #bbb; }
- .btn-next, .btn-submit {
- background: linear-gradient(135deg, #ff2a2a, #b30000);
- color: white; box-shadow: 0 5px 18px rgba(255,42,42,0.45);
- }
- .btn-next:active, .btn-submit:active { transform: scale(0.97); }
-
- .toast {
- position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
- background: #1a0000; border: 1px solid #ff2a2a; color: #ffb0b0;
- padding: 12px 22px; border-radius: 30px; font-size: 0.92rem;
- opacity: 0; pointer-events: none; transition: opacity 0.28s; z-index: 200;
- max-width: 92%; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
- }
- .toast.show { opacity: 1; }
-
- .final { text-align: center; padding: 36px 16px; }
- .final h2 { color: #ff2a2a; margin-bottom: 14px; font-size: 1.5rem; }
-
- #result-page {
- position: absolute; left: -9999px; top: 0; width: 700px;
- background: #111; color: #eee; padding: 30px; font-size: 13px; line-height: 1.6;
- }
-
- .virus-mode .marquee-full {
- z-index: 9999 !important;
- background: rgba(0,0,0,0.55);
- animation: marqueeFadeIn 2.5s ease forwards;
- }
- .virus-mode .fly-text {
- color: #ff2222 !important;
- font-size: clamp(42px, 10vw, 96px) !important;
- text-shadow: 
- 0 0 8px #ff0000,
- 0 0 20px #ff0000,
- 0 0 40px rgba(255,0,0,0.9),
- 0 0 80px rgba(255,30,30,0.6) !important;
- opacity: 0.95 !important;
- animation-duration: 8s !important;
- letter-spacing: 6px;
- }
- .virus-mode .fly-text:nth-child(1) { animation-duration: 9s !important; }
- .virus-mode .fly-text:nth-child(2) { animation-duration: 7.5s !important; }
- .virus-mode .fly-text:nth-child(3) { animation-duration: 10s !important; }
- .virus-mode .fly-text:nth-child(4) { animation-duration: 8.2s !important; }
- .virus-mode .fly-text:nth-child(5) { animation-duration: 9.5s !important; }
- .virus-mode .fly-text:nth-child(6) { animation-duration: 7s !important; }
- .virus-mode .fly-text:nth-child(7) { animation-duration: 8.8s !important; }
- .virus-mode .fly-text:nth-child(8) { animation-duration: 9.2s !important; }
- .virus-mode .fly-text:nth-child(9) { animation-duration: 7.8s !important; }
- .virus-mode .fly-text:nth-child(10) { animation-duration: 10.5s !important; }
- .virus-mode .fly-text:nth-child(11) { animation-duration: 8.5s !important; }
- .virus-mode .fly-text:nth-child(12) { animation-duration: 7.2s !important; }
-
- @keyframes marqueeFadeIn {
- 0% { opacity: 0; }
- 100% { opacity: 1; }
- }
-
- .virus-mode .container,
- .virus-mode .final {
- position: relative;
- z-index: 5;
- }
- .virus-mode .final {
- background: rgba(10, 0, 0, 0.85) !important;
- border: 2px solid #ff2a2a;
- backdrop-filter: blur(8px);
- box-shadow: 0 0 50px rgba(255,0,0,0.5);
- }
-
- .media-bar {
- margin-top: 12px; padding: 12px; background: #1a1212; border: 1px dashed #553333;
- border-radius: 10px;
- }
- .media-bar .media-title { font-size: 0.82rem; color: #ffaaaa; margin-bottom: 8px; }
- .media-bar .media-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
- .media-bar input[type="file"] { display: none; }
- .media-bar .up-btn {
- background: #2a1a1a; color: #ffcccc; border: 1px solid #664444; border-radius: 8px;
- padding: 8px 12px; font-size: 0.82rem; cursor: pointer;
- }
- .media-bar .up-btn:hover { background: #3a2020; }
- .media-bar .preview { margin-top: 8px; max-width: 100%; }
- .media-bar .preview img { max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid #444; }
- .media-bar .status { font-size: 0.78rem; color: #8f8; margin-top: 6px; }
- .media-bar .status.err { color: #f88; }
- .danmu-layer {
- position: fixed; top: 0; left: 0; width: 100%; height: 40%;
- pointer-events: none; z-index: 40; overflow: hidden;
- }
- .danmu-item {
- position: absolute; white-space: nowrap; color: #ffe0e0;
- font-size: 15px; text-shadow: 0 0 4px #000, 0 0 8px rgba(255,40,40,0.6);
- animation: danmuMove linear forwards;
- }
- @keyframes danmuMove {
- from { transform: translateX(100vw); }
- to { transform: translateX(-120%); }
- }
- .danmu-toggle {
- position: fixed; left: 12px; bottom: 12px; z-index: 60;
- background: #2a1515; color: #ffaaaa; border: 1px solid #553333;
- border-radius: 20px; padding: 8px 14px; font-size: 0.82rem; cursor: pointer;
- }
- .danmu-toggle.on { background: #3a2020; border-color: #ff5555; color: #ffcccc; }
 
 </style>
 </head>
 <body>
+<div class="marquee-full" id="marquee">
+  <div class="fly-text">无脑服从</div>
+  <div class="fly-text">白给废物</div>
+  <div class="fly-text">跪着求操</div>
+  <div class="fly-text">自愿上贡</div>
+  <div class="fly-text">大脑瘫痪</div>
+  <div class="fly-text">主人的鸡巴套</div>
+</div>
+<div class="danmaku-layer" id="danmakuLayer"></div>
+<button type="button" class="danmaku-toggle" id="danmakuToggle" onclick="toggleDanmaku()">弹幕：关</button>
 
-<div class="marquee-full">
- <div class="fly-text">齁齁齁齁 无脑服从</div>
- <div class="fly-text">傻逼母畜 欠操</div>
- <div class="fly-text">白给废物 夹紧烂穴</div>
- <div class="fly-text">主人的鸡巴套</div>
- <div class="fly-text">丧志母猪 扇脸十下</div>
- <div class="fly-text">我是贱货 跪着求操</div>
- <div class="fly-text">自愿上贡 肏烂这只母畜</div>
- <div class="fly-text">无脑 服从 主人</div>
- <div class="fly-text">齁齁齁 喷水机</div>
- <div class="fly-text">倒贴母狗 废物</div>
- <div class="fly-text">大脑瘫痪 高潮</div>
- <div class="fly-text">母畜喷水机 齁齁</div>
+<div class="home" id="home">
+  <h1>女神洗脑表单</h1>
+  <p class="lead">登录并完善资料后开始填写 · 进度会自动保存</p>
+  <div class="grid" style="max-width:420px;margin:0 auto">
+    <button type="button" class="card-btn" data-qid="q2" data-num="01" onclick="startQuiz('q2')">
+      <h2>女神洗脑表单</h2>
+      <p>点击进入填写</p>
+      <span class="tag" id="tag-q2">进入填写 →</span>
+    </button>
+  </div>
+  <p id="progressHint" style="text-align:center;color:#ff8888;font-size:0.85rem;margin-top:18px;display:none">检测到未完成进度，点上方可继续填写</p>
 </div>
 
-<div class="container">
- <h1>女神洗脑表单</h1>
- <p class="subtitle">认真填写 · 每一题都是在驯化你</p>
- <div class="progress-wrap">
- <div class="progress-bar" id="progress">0%</div>
- </div>
- <div id="form-area"></div>
- <div class="toast" id="toast"></div>
+<div class="app" id="app">
+  <div class="topbar"><button type="button" class="back-btn" onclick="backHome()">← 返回</button></div>
+  <h1 class="quiz-title" id="quizTitle"></h1>
+  <p class="subtitle" id="quizSub"></p>
+  <div class="progress-wrap"><div class="progress-bar" id="progress">0%</div></div>
+  <div id="form-area"></div>
 </div>
 
+<div class="toast" id="toast"></div>
 <div id="result-page"></div>
 
+
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box" id="authBox">
+    <div class="auth-brand">
+      <div class="logo">🐷</div>
+      <h2>女神洗脑表单</h2>
+      <p class="hint">登录或注册后完善资料，即可填写问卷与留言</p>
+    </div>
+    <div class="auth-tabs">
+      <button type="button" class="on" id="tabLogin" onclick="switchAuthTab('login')">登录</button>
+      <button type="button" id="tabReg" onclick="switchAuthTab('reg')">注册</button>
+    </div>
+    <div id="authLoginPane">
+      <label class="fld">账号</label>
+      <input id="loginUser" autocomplete="username" placeholder="请输入账号">
+      <label class="fld">密码</label>
+      <input id="loginPass" type="password" autocomplete="current-password" placeholder="请输入密码">
+      <button type="button" class="primary" onclick="doLogin()">进入</button>
+      <p class="foot-note">没有账号？点上方「注册」</p>
+    </div>
+    <div id="authRegPane" style="display:none">
+      <label class="fld">账号 *</label>
+      <input id="regUser" autocomplete="username" placeholder="3–20 位字母 / 数字 / 下划线">
+      <label class="fld">密码 *</label>
+      <input id="regPass" type="password" autocomplete="new-password" placeholder="至少 6 位">
+      <button type="button" class="primary" onclick="doRegister()">注册并设置资料</button>
+      <p class="foot-note">注册后需完善姓名、性别、年龄、属性</p>
+    </div>
+    <div id="authProfilePane" style="display:none">
+      <button type="button" class="auth-profile-close" id="profCloseBtn" style="display:none" onclick="closeProfileEditor()" title="关闭">×</button>
+      <p class="hint" style="margin-bottom:8px" id="profHint">完善资料后即可使用全部功能</p>
+      <label class="fld">显示姓名 *</label>
+      <input id="profName" placeholder="将显示在留言与进度中">
+      <div class="row2">
+        <div>
+          <label class="fld">性别 *</label>
+          <select id="profGender" onchange="toggleAttrByGender()"><option value="">请选择</option><option value="女">女</option><option value="男">男</option></select>
+        </div>
+        <div>
+          <label class="fld">年龄 *</label>
+          <input id="profAge" type="number" min="1" max="120" placeholder="岁">
+        </div>
+      </div>
+      <div id="attrFieldWrap">
+        <label class="fld">属性 *</label>
+        <select id="profAttr">
+          <option value="">请选择</option>
+          <option value="母狗">母狗</option>
+          <option value="母驴">母驴</option>
+          <option value="母猪">母猪</option>
+          <option value="母蛆">母蛆</option>
+          <option value="母王八">母王八</option>
+        </select>
+      </div>
+      <div class="privacy-row" id="privacyFieldWrap" style="display:none">
+        <div style="font-size:.78rem;color:#888;margin-bottom:2px">留言板展示（仅女性）</div>
+        <label><input type="checkbox" id="profShowAttr" checked> 留言时展示属性</label>
+        <label><input type="checkbox" id="profShowAge"> 留言时展示年龄</label>
+      </div>
+      <label class="fld">头像（可选）</label>
+      <div class="avatar-pick">
+        <img id="profAvatarPreview" src="" alt="头像" onerror="this.style.opacity=.3">
+        <label class="up-btn">选择图片<input type="file" accept="image/*" onchange="onAvatarPick(this)"></label>
+      </div>
+      <button type="button" class="primary" id="profSaveBtn" onclick="saveProfile()">保存并进入合集</button>
+    </div>
+    <div class="err" id="authErr"></div>
+  </div>
+</div>
+<div class="user-bar" id="userBar" style="display:none">
+  <img id="userBarAv" alt="" title="点击修改资料" onclick="openProfileEditor()">
+  <span class="ub-name" id="userBarName" title="点击修改资料" onclick="openProfileEditor()">—</span>
+  <button type="button" onclick="doLogout()">退出</button>
+</div>
+
 <div class="chat-panel" id="chatPanel">
- <div class="chat-head" onclick="toggleChat()">
- <span>留言板 · 大家的沦陷记录</span>
- <span id="chatToggleHint">收起</span>
- </div>
- <div class="chat-body" id="chatBody"><div class="chat-empty">加载中…</div></div>
- <div class="chat-input-row">
- <input id="chatNick" type="text" maxlength="20" placeholder="称呼（选填）">
- <textarea id="chatText" maxlength="200" placeholder="说一句…（最多200字）"></textarea>
- <button type="button" onclick="sendChat()">发送留言</button>
- </div>
+  <div class="chat-head" onclick="toggleChat()"><span>留言板 · 大家的沦陷记录</span><span id="chatToggleHint">收起</span></div>
+  <div class="chat-body" id="chatBody"><div class="chat-empty">加载中…</div></div>
+  <div class="chat-input-row">
+    <textarea id="chatText" maxlength="200" placeholder="说一句…（最多200字）"></textarea>
+    <div class="chat-img-preview-wrap" id="chatImgPreviewWrap">
+      <img id="chatImgPreview" class="chat-img-preview" alt="">
+      <button type="button" class="clear-img" onclick="clearChatImage()" title="清除">×</button>
+    </div>
+    <div class="chat-tools">
+      <label class="up-btn">图片<input type="file" accept="image/*" id="chatImgInput" onchange="onChatImgPick(this)"></label>
+      <span id="chatImgHint" style="font-size:0.75rem;color:#888"></span>
+    </div>
+    <button type="button" class="send-btn" onclick="sendChat()">发送留言</button>
+  </div>
+</div>
+
+<div class="modal-mask" id="exitModal">
+  <div class="modal-box"><h3>贱逼婊子这就不行了？</h3><p>继续写，不许逃。</p>
+  <div class="modal-btns"><button class="modal-continue" type="button" onclick="hideExitModal()">继续</button></div></div>
+</div>
+<div class="modal-mask" id="adModal">
+  <div class="modal-box"><h3>想不想给祖宗当广告牌？</h3>
+  <p>点击「同意」将：① 复制「小新猪圈第xxx号大贱逼」名字与简介到剪贴板；② 尝试打开推特个人资料编辑页。请你登录后粘贴并保存，即视为授权当广告牌。</p>
+  <div class="modal-btns">
+    <button class="modal-agree" type="button" onclick="agreeAd()">同意并打开推特</button>
+    <button class="modal-deny" type="button" onclick="hideAdModal()">不要</button>
+  </div></div>
 </div>
 
 <script>
-const EMAILJS_SERVICE_ID = 'service_h3aku9j';
-const EMAILJS_TEMPLATE_ID = 'template_wmkywio';
-const EMAILJS_PUBLIC_KEY = 'nB97oUjAhFoiOBNew';
-const RECEIVER_EMAIL = '318260856@qq.com';
 
+const EMAILJS_SERVICE_ID='service_h3aku9j';
+const EMAILJS_TEMPLATE_ID='template_wmkywio';
+const EMAILJS_PUBLIC_KEY='nB97oUjAhFoiOBNew';
+const RECEIVER_EMAIL='318260856@qq.com';
 emailjs.init(EMAILJS_PUBLIC_KEY);
-
-const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxSZ1yuaDvD-wgvjiEzPkFrp3ltthESTbOzJ7_gBebWvrA3PPL1zUi2kTP6JwpN17lz/exec';
-const DRIVE_UPLOAD_SECRET = 'qbz03ak47';
-const mediaStore = {}; // qid -> { image?: dataURL, videoName?: string, driveUrls: [] }
-let danmuEnabled = false;
-
-
-const FIREBASE_CONFIG = {
- apiKey: "AIzaSyCjtnfJ1BRLEykag7fP9I8PVbVddjj-czc",
- authDomain: "wenjuan-56220.firebaseapp.com",
- projectId: "wenjuan-56220",
- storageBucket: "wenjuan-56220.firebasestorage.app",
- messagingSenderId: "460084608178",
- appId: "1:460084608178:web:be891dc3d3d49c1f4d1dab"
-};
-let db = null;
-try {
- if (!firebase.apps || !firebase.apps.length) {
- firebase.initializeApp(FIREBASE_CONFIG);
- }
- db = firebase.firestore();
- console.log('留言板 Firestore 已就绪');
-} catch (e) {
- console.error('Firestore 初始化失败', e);
-}
-
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playTone(freq, duration, type = 'sine', vol = 0.15) {
- if (audioCtx.state === 'suspended') audioCtx.resume();
- const osc = audioCtx.createOscillator();
- const gain = audioCtx.createGain();
- osc.type = type;
- osc.frequency.value = freq;
- gain.gain.setValueAtTime(vol, audioCtx.currentTime);
- gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
- osc.connect(gain);
- gain.connect(audioCtx.destination);
- osc.start();
- osc.stop(audioCtx.currentTime + duration);
-}
-function soundClick() { playTone(680, 0.06, 'triangle', 0.12); }
-function soundNext() { playTone(420, 0.12, 'sine', 0.14); setTimeout(() => playTone(520, 0.08, 'sine', 0.08), 60); }
-function soundSuccess() { playTone(520, 0.15, 'sine', 0.16); setTimeout(() => playTone(780, 0.25, 'sine', 0.12), 120); }
-function soundError() { playTone(180, 0.18, 'sawtooth', 0.1); }
-
-function requestVibratePermission() {
-  try {
-    if (navigator.vibrate) navigator.vibrate(10);
-  } catch (e) {}
-}
-
-function vibrate(pattern = 30) { if (navigator.vibrate) navigator.vibrate(pattern); }
-
-/* ===== 节拍器背景音（根据题目自动调速） ===== */
-let bgStarted = false;
-let tickInterval = 1000;
-let tickTimer = null;
-
-function playMetronomeTick() {
- if (audioCtx.state === 'suspended') audioCtx.resume();
- const osc = audioCtx.createOscillator();
- const gain = audioCtx.createGain();
- osc.type = 'sine';
- osc.frequency.value = 1200;
- gain.gain.setValueAtTime(0.42, audioCtx.currentTime);
- gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
- osc.connect(gain);
- gain.connect(audioCtx.destination);
- osc.start();
- osc.stop(audioCtx.currentTime + 0.1);
-}
-
-function startBackgroundAudio() {
- if (bgStarted) return;
- bgStarted = true;
- if (audioCtx.state === 'suspended') audioCtx.resume();
- scheduleTick();
-}
-
-function scheduleTick() {
- if (tickTimer) clearTimeout(tickTimer);
- if (!bgStarted) return;
- playMetronomeTick();
- tickTimer = setTimeout(scheduleTick, tickInterval);
-}
-
-function updateMetronomeSpeed(q) {
- if (!q) {
- tickInterval = 1000;
- return;
- }
- const title = (q.title || '');
- const isTimed = /秒|倒数|计时|高潮|边缘|喷|扣|敏感提升|20\.\.\.|50\.\.\.|5\.\.\.|赐予高潮|立刻喷|失禁|排卵|触碰|扣着/.test(title);
- if (isTimed) {
- tickInterval = 420;
- } else {
- tickInterval = 1000;
- }
-}
-
-
-function playerNameForFile() {
-  let n = (answers[1] || '').toString().trim();
-  if (!n) n = '匿名';
-  return n.replace(/[\\/:*?"<>|]/g, '_').slice(0, 40);
-}
-
-function compressImage(file, maxSide, quality) {
-  return new Promise(function(resolve, reject) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const img = new Image();
-      img.onload = function() {
-        let w = img.width, h = img.height;
-        const scale = Math.min(1, maxSide / Math.max(w, h));
-        w = Math.round(w * scale); h = Math.round(h * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-async function uploadToDrive(payload) {
-  const raw = String(payload.base64 || '')
-    .replace(/^data:.*?base64,/, '')
-    .replace(/\s/g, '');
-  const name = payload.name || (playerNameForFile() + '_' + Date.now() + '.jpg');
-  const body = {
-    secret: DRIVE_UPLOAD_SECRET,
-    fileName: name,
-    mimeType: payload.mimeType || 'image/jpeg',
-    base64: raw
-  };
-  const res = await fetch(DRIVE_UPLOAD_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(body)
-  });
-  const text = await res.text();
-  let data;
-  try { data = JSON.parse(text); } catch (e) { throw new Error('云盘返回异常'); }
-  if (!data || !data.ok) throw new Error((data && data.error) || '上传失败');
-  return data;
-}
-
-async function uploadImageForQ(qid, file, statusEl, previewEl) {
-  if (!file || !file.type.startsWith('image/')) {
-    if (statusEl) { statusEl.textContent = '请选择图片文件'; statusEl.className = 'status err'; }
-    return;
-  }
-  if (statusEl) { statusEl.textContent = '压缩并上传中…'; statusEl.className = 'status'; }
-  try {
-    const dataUrl = await compressImage(file, 1280, 0.82);
-    if (previewEl) {
-      previewEl.innerHTML = '<img src="' + dataUrl + '" alt="预览">';
-    }
-    if (!mediaStore[qid]) mediaStore[qid] = { driveUrls: [] };
-    mediaStore[qid].image = dataUrl;
-    const fname = playerNameForFile() + '_q' + qid + '_' + Date.now() + '.jpg';
-    const result = await uploadToDrive({ base64: dataUrl, name: fname, mimeType: 'image/jpeg' });
-    mediaStore[qid].driveUrls.push(result.url || '');
-    if (statusEl) { statusEl.textContent = '✓ 上传成功'; statusEl.className = 'status'; }
-    try { localStorage.setItem('nvshen_media', JSON.stringify(Object.keys(mediaStore))); } catch(e) {}
-    soundClick();
-  } catch (e) {
-    console.error(e);
-    if (statusEl) { statusEl.textContent = '上传失败：' + (e.message || e); statusEl.className = 'status err'; }
-    soundError();
-  }
-}
-
-async function uploadVideoForQ(qid, file, statusEl) {
-  if (!file || !file.type.startsWith('video/')) {
-    if (statusEl) { statusEl.textContent = '请选择视频文件'; statusEl.className = 'status err'; }
-    return;
-  }
-  if (file.size > 20 * 1024 * 1024) {
-    if (statusEl) { statusEl.textContent = '视频请控制在 20MB 以内'; statusEl.className = 'status err'; }
-    return;
-  }
-  if (statusEl) { statusEl.textContent = '视频上传中，请稍候…'; statusEl.className = 'status'; }
-  try {
-    const dataUrl = await new Promise(function(resolve, reject) {
-      const r = new FileReader();
-      r.onload = function() { resolve(r.result); };
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-    const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
-    const fname = playerNameForFile() + '_q' + qid + '_' + Date.now() + '.' + ext;
-    const result = await uploadToDrive({
-      base64: dataUrl,
-      name: fname,
-      mimeType: file.type || 'video/mp4'
-    });
-    if (!mediaStore[qid]) mediaStore[qid] = { driveUrls: [] };
-    mediaStore[qid].videoName = fname;
-    mediaStore[qid].driveUrls.push(result.url || '');
-    if (statusEl) { statusEl.textContent = '✓ 视频上传成功'; statusEl.className = 'status'; }
-    soundClick();
-  } catch (e) {
-    console.error(e);
-    if (statusEl) { statusEl.textContent = '视频上传失败：' + (e.message || e); statusEl.className = 'status err'; }
-    soundError();
-  }
-}
-
-function mediaBarHTML(qid) {
-  return '<div class="media-bar" id="mediaBar' + qid + '">' +
-    '<div class="media-row">' +
-    '<label class="up-btn">选图片<input type="file" accept="image/*" onchange="onPickImage(' + qid + ', this)"></label>' +
-    '<label class="up-btn">选视频<input type="file" accept="video/*" onchange="onPickVideo(' + qid + ', this)"></label>' +
-    '</div>' +
-    '<div class="preview" id="preview' + qid + '"></div>' +
-    '<div class="status" id="status' + qid + '"></div>' +
-    '</div>';
-}
-
-function onPickImage(qid, input) {
-  const f = input.files && input.files[0];
-  if (!f) return;
-  uploadImageForQ(qid, f, document.getElementById('status' + qid), document.getElementById('preview' + qid));
-}
-function onPickVideo(qid, input) {
-  const f = input.files && input.files[0];
-  if (!f) return;
-  uploadVideoForQ(qid, f, document.getElementById('status' + qid));
-}
-
-async function uploadPdfToDrive(pdf) {
-  try {
-    const base64Data = pdf.output('base64');
-    const fname = playerNameForFile() + '_女神洗脑档案_' + Date.now() + '.pdf';
-    await uploadToDrive({ base64: base64Data, name: fname, mimeType: 'application/pdf' });
-    showToast('PDF 已同步到云盘');
-  } catch (e) {
-    console.error('PDF 云盘上传失败', e);
-    showToast('PDF 云盘上传失败（本地已下载）');
-  }
-}
-
-function toggleDanmu() {
-  danmuEnabled = !danmuEnabled;
-  const btn = document.getElementById('danmuToggle');
-  if (btn) {
-    btn.textContent = danmuEnabled ? '弹幕：开' : '弹幕：关';
-    btn.classList.toggle('on', danmuEnabled);
-  }
-  if (danmuEnabled) {
-    spawnDanmu('弹幕已开启');
-  }
-}
-
-function spawnDanmu(text) {
-  if (!danmuEnabled) return;
-  const layer = document.getElementById('danmuLayer');
-  if (!layer || !text) return;
-  const el = document.createElement('div');
-  el.className = 'danmu-item';
-  el.textContent = String(text).slice(0, 80);
-  el.style.top = (8 + Math.random() * 70) + '%';
-  el.style.animationDuration = (8 + Math.random() * 6) + 's';
-  layer.appendChild(el);
-  setTimeout(function() { el.remove(); }, 15000);
-}
-
-
-const questions = [
+const FIREBASE_CONFIG={apiKey:"AIzaSyCbAOQVUFT9xaM3nW4SkgWMSU94j6B4JOs",authDomain:"wenjuan-56220.firebaseapp.com",projectId:"wenjuan-56220",storageBucket:"wenjuan-56220.firebasestorage.app",messagingSenderId:"460084608178",appId:"1:460084608178:web:be891dc3d3d49c1f4d1dab"};
+let db=null;
+let storage=null;
+try{
+  if(!firebase.apps||!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  db=firebase.firestore();
+  console.log('Firestore 已就绪');
+}catch(e){console.error(e);}
+storage=null; // 不使用 Firebase Storage，头像/留言图走云盘或压缩内嵌
+const IMAGES = {};
+const QUIZ_DATA = {
+  q2:{title:"女神洗脑表单",subtitle:"认真填写 · 每一题都是在驯化你",storage:"quiz_q2",progressKey:"quiz_q2_p",pdfPrefix:"女神洗脑档案",nameField:1,questions:[
  { id:1, type:'text', title:'称呼 *' },
  { id:2, type:'text', title:'年龄 *' },
  { id:3, type:'text', title:'职业 *' },
@@ -770,533 +432,1289 @@ const questions = [
  { id:105, type:'text', title:'想要被曝光吗 *' },
  { id:106, type:'text', title:'联系方式 *' },
  { id:107, type:'radio', title:'曝光 *', options:['曝光问卷内容和联系方式','只曝光问卷内容','不曝光'] }
-];
+]}
+};
 
-let current = 0;
-const answers = {};
-const total = questions.length;
-let submitting = false;
+let activeId=null, questions=[], current=0, answers={}, mediaAnswers={}, submitting=false;
+let danmakuOn=false; const seenDanmakuIds={};
+const toasts=['好狗，继续填','骚逼真乖','再认真点，主人看着呢','已经开始流水了吧？','填完才能被操','废物就是要老实回答','对，就是这种态度','越填越贱了呢'];
 
-const toasts = ['好狗，继续填','骚逼真乖','再认真点，主人看着呢','已经开始流水了吧？','填完才能被操','废物就是要老实回答','对，就是这种态度','越填越贱了呢','还敢撒谎？','主人喜欢听话的母畜','夹紧点再答下一题','欠操的样子已经露出来了'];
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+function playTone(freq,duration,type='sine',vol=0.15){
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
+  osc.type=type; osc.frequency.value=freq;
+  gain.gain.setValueAtTime(vol,audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime+duration);
+}
+function soundClick(){ playTone(680,0.06,'triangle',0.2); }
+function soundNext(){ playTone(420,0.12,'sine',0.22); setTimeout(()=>playTone(520,0.08,'sine',0.14),60); }
+function soundSuccess(){ playTone(520,0.15,'sine',0.28); setTimeout(()=>playTone(780,0.25,'sine',0.22),120); }
+function soundError(){ playTone(180,0.18,'sawtooth',0.18); }
+function vibrate(pattern=30){ try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){} }
+function requestVibratePermission(){ try{ if(navigator.vibrate){ navigator.vibrate(15); } }catch(e){} }
 
-function showToast(msg) {
- const t = document.getElementById('toast');
- t.textContent = msg || toasts[Math.floor(Math.random() * toasts.length)];
- t.classList.add('show');
- setTimeout(() => t.classList.remove('show'), 2300);
+let bgStarted=false, tickInterval=1000, tickTimer=null;
+function playMetronomeTick(){
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
+  osc.type='sine'; osc.frequency.value=1200;
+  gain.gain.setValueAtTime(0.48,audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.08);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime+0.1);
+}
+function startBackgroundAudio(){
+  // 仅在问卷内启动；可重复进入
+  if(bgStarted) return;
+  bgStarted=true;
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  scheduleTick();
+}
+function stopBackgroundAudio(){
+  bgStarted=false;
+  if(tickTimer){ clearTimeout(tickTimer); tickTimer=null; }
+  tickInterval=1000;
+}
+function scheduleTick(){
+  if(tickTimer) clearTimeout(tickTimer);
+  if(!bgStarted) return;
+  // 仅问卷进行中才响
+  if(typeof activeId==='undefined' || !activeId){ bgStarted=false; return; }
+  playMetronomeTick();
+  tickTimer=setTimeout(scheduleTick, tickInterval);
+}
+function updateMetronomeSpeed(q){
+  if(!q){ tickInterval=1000; return; }
+  const title=q.title||'';
+  const isTimed=/秒|倒数|计时|高潮|边缘|喷|扣|敏感|触碰|跪|脱|揉搓|忍耐|不许高潮|提拉|勒紧|抽插|挑战/.test(title);
+  tickInterval=isTimed?420:1000;
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  if(!t) return;
+  t.textContent=msg||toasts[Math.floor(Math.random()*toasts.length)];
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2300);
 }
 
-function render() {
- const q = questions[current];
- const area = document.getElementById('form-area');
- let html = `<div class="card active">`;
- html += `<div class="card-top"><button type="button" class="exit-btn" onclick="showExitModal()">退出</button></div>`;
- html += `<div class="q-title"><span>Q${q.id}.</span> ${q.title}</div>`;
-
- if (q.type === 'radio' || q.type === 'scale') {
- if (q.type === 'scale') {
- html += `<div class="scale">`;
- for (let i = 0; i <= 10; i++) {
- html += `<label data-value="${i}"><input type="radio" name="q${q.id}" value="${i}" ${answers[q.id] == i ? 'checked' : ''}><span>${i}</span></label>`;
- }
- html += `</div><p style="text-align:center;font-size:0.78rem;color:#777;margin-top:8px">0 = 无法接受　　10 = 疯狂热爱</p>`;
- } else {
- q.options.forEach(opt => {
- html += `<label data-value="${opt}"><input type="radio" name="q${q.id}" value="${opt}" ${answers[q.id] === opt ? 'checked' : ''}> ${opt}</label>`;
- });
- }
- } else if (q.type === 'checkbox') {
- q.options.forEach(opt => {
- const checked = (answers[q.id] || []).includes(opt) ? 'checked' : '';
- html += `<label data-value="${opt}"><input type="checkbox" name="q${q.id}" value="${opt}" ${checked}> ${opt}</label>`;
- });
- } else if (q.type === 'textarea') {
- html += `<textarea id="input">${answers[q.id] || ''}</textarea>`;
- } else {
- html += `<input type="text" id="input" value="${answers[q.id] || ''}" placeholder="请输入...">`;
- }
-
- if (q.type === 'text' || q.type === 'textarea') {
- html += mediaBarHTML(q.id);
- }
-
- html += `<div class="btn-row">`;
- if (current > 0) html += `<button class="btn-prev" onclick="prev()">上一题</button>`;
- if (current < total - 1) {
- html += `<button class="btn-next" onclick="next()">下一题</button>`;
- } else {
- html += `<button class="btn-submit" id="submitBtn" onclick="submit()">提交并生成档案</button>`;
- }
- html += `</div></div>`;
-
- area.innerHTML = html;
- updateProgress();
- updateMetronomeSpeed(q);
-
- if (q.type === 'radio' || q.type === 'scale') {
- area.querySelectorAll('label[data-value]').forEach(label => {
- label.onclick = function() {
- const value = this.getAttribute('data-value');
- answers[q.id] = value;
- localStorage.setItem('nvshen_answers', JSON.stringify(answers));
- area.querySelectorAll(`input[name="q${q.id}"]`).forEach(r => r.checked = (r.value == value));
- soundClick();
- vibrate(25);
- };
- });
- }
-
- if (q.type === 'checkbox') {
- area.querySelectorAll(`input[name="q${q.id}"]`).forEach(cb => {
- cb.addEventListener('change', function() {
- const checkedValues = [];
- area.querySelectorAll(`input[name="q${q.id}"]:checked`).forEach(c => checkedValues.push(c.value));
- answers[q.id] = checkedValues;
- localStorage.setItem('nvshen_answers', JSON.stringify(answers));
- soundClick();
- vibrate(20);
- });
- });
- }
+function startQuiz(id){
+  if(!requireAuthForAction()) return;
+  const cfg=QUIZ_DATA[id]; if(!cfg) return;
+  activeId=id;
+  questions=(cfg.questions||[]).slice();
+  answers={}; mediaAnswers={}; current=0; submitting=false;
+  document.body.classList.remove('virus-mode');
+  try{
+    const saved=localStorage.getItem(cfg.storage);
+    if(saved) Object.assign(answers, JSON.parse(saved));
+    const mediaSaved=localStorage.getItem(cfg.storage + '_media');
+    if(mediaSaved) Object.assign(mediaAnswers, JSON.parse(mediaSaved));
+    const p=parseInt(localStorage.getItem(cfg.progressKey)||'0',10);
+    if(!isNaN(p)&&p>=0&&p<questions.length) current=p;
+  }catch(e){}
+  document.getElementById('home').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('quizTitle').textContent=cfg.title;
+  document.getElementById('quizSub').textContent=cfg.subtitle;
+  render();
+  if(current>0) showToast('已恢复进度：第 '+(current+1)+' / '+questions.length+' 题');
+  window.scrollTo({top:0,behavior:'smooth'});
+  startBackgroundAudio();
+  requestVibratePermission();
+}
+function backHome(){
+  if(activeId) saveProgress();
+  activeId=null;
+  stopBackgroundAudio();
+  document.getElementById('app').style.display='none';
+  document.getElementById('home').style.display='block';
+  document.body.classList.remove('virus-mode');
+  refreshHomeProgress();
 }
 
-function next() {
- const q = questions[current];
- let currentAnswer = answers[q.id];
-
- if (q.type === 'radio' || q.type === 'scale') {
- const checked = document.querySelector(`input[name="q${q.id}"]:checked`);
- if (checked) currentAnswer = checked.value;
- } else if (q.type === 'checkbox') {
- const checkedValues = [];
- document.querySelectorAll(`input[name="q${q.id}"]:checked`).forEach(cb => checkedValues.push(cb.value));
- currentAnswer = checkedValues;
- } else {
- const el = document.getElementById('input');
- if (el) currentAnswer = el.value.trim();
- }
-
- answers[q.id] = currentAnswer;
- localStorage.setItem('nvshen_answers', JSON.stringify(answers));
-
- let isEmpty = false;
- if (q.type === 'checkbox') {
- isEmpty = !currentAnswer || !Array.isArray(currentAnswer) || currentAnswer.length === 0;
- } else {
- isEmpty = currentAnswer === '' || currentAnswer === null || currentAnswer === undefined;
- }
-
- if (isEmpty) {
- soundError();
- vibrate([40, 30, 40]);
- showToast('不许空着，老实回答');
- return;
- }
-
- soundNext();
- vibrate(35);
- current++;
- try {
- localStorage.setItem('nvshen_answers', JSON.stringify(answers));
- localStorage.setItem('nvshen_progress', String(current));
- } catch (e) {}
- render();
- showToast();
- window.scrollTo({ top: 0, behavior: 'smooth' });
+function mediaBarHTML(qid){
+  const m = mediaAnswers[qid] || {};
+  let prev = '<div class="media-preview" id="mediaPreview">';
+  if (m.image) {
+    prev += '<img src="' + m.image + '" alt="预览"><div class="media-tip">' +
+      (m.imageUrl ? '上传成功（可重选覆盖）' : '已上传图片（可重选覆盖）') + '</div>';
+  }
+  if (m.videoName) {
+    prev += '<div class="media-tip">🎬 视频：' + String(m.videoName).replace(/</g,'&lt;') +
+      (m.videoUrl ? ' · 上传成功' : ' · 本地已选') + '</div>';
+  }
+  prev += '</div>';
+  return '<div class="media-bar" style="display:flex;flex-wrap:wrap;gap:8px">' +
+    '<label class="file-btn">📷 上传图片<input type="file" accept="image/*" onchange="uploadImage(event,' + qid + ')"></label>' +
+    '<label class="file-btn">🎬 上传视频<input type="file" accept="video/*" onchange="uploadVideo(event,' + qid + ')"></label>' +
+    '</div>' + prev;
 }
-
-function prev() {
- const q = questions[current];
- if (q.type === 'radio' || q.type === 'scale') {
- const checked = document.querySelector(`input[name="q${q.id}"]:checked`);
- answers[q.id] = checked ? checked.value : '';
- } else if (q.type === 'checkbox') {
- const checkedValues = [];
- document.querySelectorAll(`input[name="q${q.id}"]:checked`).forEach(cb => checkedValues.push(cb.value));
- answers[q.id] = checkedValues;
- } else {
- const el = document.getElementById('input');
- answers[q.id] = el ? el.value.trim() : '';
- }
- soundClick();
- vibrate(20);
- current--;
- if (current < 0) current = 0;
- try {
- localStorage.setItem('nvshen_answers', JSON.stringify(answers));
- localStorage.setItem('nvshen_progress', String(current));
- } catch (e) {}
- render();
- window.scrollTo({ top: 0, behavior: 'smooth' });
+function ensureMedia(qid){
+  if (!mediaAnswers[qid]) mediaAnswers[qid] = {};
+  return mediaAnswers[qid];
 }
-
-function updateProgress() {
- const pct = Math.round((current / (total - 1)) * 100);
- const bar = document.getElementById('progress');
- bar.style.width = pct + '%';
- bar.textContent = `驯化进度 ${pct}%`;
-}
-
-async function submit() {
- if (submitting) return;
- submitting = true;
- const btn = document.getElementById('submitBtn');
- if (btn) btn.textContent = '生成中...';
-
- const q = questions[current];
- if (q.type === 'radio' || q.type === 'scale') {
- const checked = document.querySelector(`input[name="q${q.id}"]:checked`);
- answers[q.id] = checked ? checked.value : (answers[q.id] || '');
- } else if (q.type === 'checkbox') {
- const checkedValues = [];
- document.querySelectorAll(`input[name="q${q.id}"]:checked`).forEach(cb => checkedValues.push(cb.value));
- answers[q.id] = checkedValues;
- } else {
- const el = document.getElementById('input');
- answers[q.id] = el ? el.value.trim() : '';
- }
-
- soundSuccess();
- vibrate([50, 30, 50, 30, 80]);
- showToast('正在生成你的洗脑档案...');
-
- const resultDiv = document.getElementById('result-page');
- let html = `<h2 style="color:#ff2a2a;text-align:center;margin-bottom:20px">女神洗脑表单 · 填写结果</h2>`;
- html += `<p style="text-align:center;color:#aaa;margin-bottom:24px">提交时间：${new Date().toLocaleString()}</p>`;
- questions.forEach(q => {
- const ans = answers[q.id];
- const display = Array.isArray(ans) ? ans.join(' / ') : (ans || '（未填）');
- html += `<div style="margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #333">
- <div style="color:#ff8888;font-weight:600">Q${q.id}. ${q.title}</div>
- <div style="margin-top:4px">答：${display}</div>
- </div>`;
- });
- resultDiv.innerHTML = html;
-
- const canvas = await html2canvas(resultDiv, { scale: 2, backgroundColor: '#111', useCORS: true });
- const imgData = canvas.toDataURL('image/jpeg', 0.92);
- const { jsPDF } = window.jspdf;
- const pdf = new jsPDF('p', 'mm', 'a4');
- const pageWidth = pdf.internal.pageSize.getWidth();
- const pageHeight = pdf.internal.pageSize.getHeight();
- const imgWidth = pageWidth;
- const imgHeight = (canvas.height * imgWidth) / canvas.width;
- let heightLeft = imgHeight;
- let position = 0;
-
- pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
- heightLeft -= pageHeight;
- while (heightLeft > 0) {
- position = heightLeft - imgHeight;
- pdf.addPage();
- pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
- heightLeft -= pageHeight;
- }
-
- const pdfFileName = '女神洗脑档案_' + (answers[1] || '匿名') + '_' + Date.now() + '.pdf';
- pdf.save(pdfFileName);
- window.__lastPdf = pdf;
- await uploadPdfToDrive(pdf);
- window.__lastPdfName = pdfFileName;
- showToast('PDF 已开始下载，请务必保存');
-
- let hasMedia = Object.keys(mediaStore).length > 0;
- let textBody = '【新的女神洗脑表单提交】\n时间：' + new Date().toLocaleString() + (hasMedia ? '\n[含图片/视频，已上传云盘]' : '') + '\n\n';
- questions.forEach(q => {
- const ans = answers[q.id];
- textBody += 'Q' + q.id + '. ' + q.title + '\n答： ' + (Array.isArray(ans) ? ans.join(' / ') : (ans || '（未填）')) + '\n\n';
- });
-
- try {
- await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
- to_email: RECEIVER_EMAIL,
- subject: '女神洗脑表单 - ' + (answers[1] || '匿名'),
- message: textBody
- });
- document.getElementById('form-area').innerHTML =
- '<div class="card active final">' +
- '<h2>提交成功</h2>' +
- '<p>文字答案已发送到主人邮箱。</p>' +
- '<p style="margin-top:14px;color:#ffcc66;line-height:1.55;border:1px solid #665522;background:#2a2208;padding:12px;border-radius:10px">' +
- '⚠ 请务必保存刚下载的 PDF 档案！<br>若未下载或被浏览器拦截，<b>刷新后数据可能丢失</b>。' +
- '</p>' +
- '<button class="btn-submit" style="margin-top:18px" type="button" onclick="redownloadPdf()">重新下载 PDF</button>' +
- '<p style="margin-top:18px;color:#ff8888;font-size:1.05rem">现在滚去加 QQ：318260856 继续被调教</p>' +
- '<button class="btn-submit" style="margin-top:16px;background:#333" onclick="location.reload()">再填一次</button>' +
- '</div>';
-
- document.body.classList.add('virus-mode');
- const marquee = document.querySelector('.marquee-full');
- const extraTexts = [
- '无脑服从', '母畜喷水机', '大脑瘫痪', '齁齁齁齁',
- '倒贴废物', '白给母畜', '夹紧烂穴', '主人的鸡巴套',
- '丧志母狗', '跪着求操', '自愿上贡', '肏烂这只母畜',
- '傻逼母畜', '欠操的骚逼', '喷水机', '高潮失禁'
- ];
- extraTexts.forEach(function(txt) {
- const d = document.createElement('div');
- d.className = 'fly-text';
- d.textContent = txt;
- d.style.top = (Math.random() * 90) + '%';
- d.style.left = (Math.random() * 80 - 20) + '%';
- d.style.fontSize = 'clamp(' + (30 + Math.random()*40) + 'px, ' + (6 + Math.random()*6) + 'vw, ' + (70 + Math.random()*40) + 'px)';
- d.style.animationDuration = (7 + Math.random() * 5) + 's';
- marquee.appendChild(d);
- });
- tickInterval = 1400;
- localStorage.removeItem('nvshen_answers');
- localStorage.removeItem('nvshen_progress');
- soundSuccess();
- vibrate([80, 40, 80, 40, 120, 60, 150]);
- setTimeout(function(){ showAdModal(); }, 800);
- } catch (err) {
- console.error(err);
- soundError();
- vibrate([60, 40, 60]);
- showToast('邮件发送失败，但PDF已成功下载');
- if (btn) btn.textContent = '提交并生成档案';
- submitting = false;
- }
-}
-
-function redownloadPdf() {
- if (window.__lastPdf && window.__lastPdfName) {
- try {
- window.__lastPdf.save(window.__lastPdfName);
- showToast('已再次触发 PDF 下载，请到下载栏保存');
- soundSuccess();
- } catch (e) {
- showToast('请允许浏览器下载文件');
- soundError();
- }
- } else {
- showToast('请重新提交以生成 PDF');
- }
-}
-
-function showExitModal() {
- document.getElementById('exitModal').classList.add('show');
- soundError();
- vibrate([40, 30, 40]);
-}
-function hideExitModal() {
- document.getElementById('exitModal').classList.remove('show');
- soundClick();
-}
-
-function showAdModal() {
- document.getElementById('adModal').classList.add('show');
-}
-function hideAdModal() {
- document.getElementById('adModal').classList.remove('show');
-}
-function agreeAd() {
- const n = Math.floor(Math.random() * 900) + 100;
- const name = '小新猪圈第' + n + '号大贱逼';
- const bio = '忠诚！服从！侍奉！@fengliuc3133';
- const twitterUrl = 'https://x.com/settings/profile';
- const copyPayload = '名字：' + name + '\n简介：' + bio;
-
- function fallbackCopy(t) {
- var ta = document.createElement('textarea');
- ta.value = t; ta.style.position = 'fixed'; ta.style.left = '-9999px';
- document.body.appendChild(ta); ta.select();
- try { document.execCommand('copy'); } catch(e) {}
- document.body.removeChild(ta);
- }
- var win = null;
- try {
- win = window.open(twitterUrl, '_blank');
- } catch (e) {
- win = null;
- }
- if (!win || win.closed || typeof win.closed === 'undefined') {
- try {
- if (navigator.clipboard && navigator.clipboard.writeText) {
- navigator.clipboard.writeText(copyPayload).catch(function(){ fallbackCopy(copyPayload); });
- } else {
- fallbackCopy(copyPayload);
- }
- } catch (e) {
- fallbackCopy(copyPayload);
- }
- window.location.href = twitterUrl;
- return;
- }
- try {
- if (navigator.clipboard && navigator.clipboard.writeText) {
- navigator.clipboard.writeText(copyPayload).catch(function(){ fallbackCopy(copyPayload); });
- } else {
- fallbackCopy(copyPayload);
- }
- } catch (e) {
- fallbackCopy(copyPayload);
- }
- const box = document.querySelector('#adModal .modal-box');
- box.innerHTML =
- '<h3>已授权 · 请完成粘贴</h3>' +
- '<p>已跳转推特资料页。请按下面内容修改并保存：</p>' +
- '<div class="copy-hint"><b>名字：</b>' + name + '<br><b>简介：</b>' + bio + '</div>' +
- '<p style="font-size:0.8rem;color:#888">内容已复制到剪贴板，直接粘贴即可</p>' +
- '<div class="modal-btns">' +
- '<button class="modal-continue" type="button" onclick="window.open(\'' + twitterUrl + '\',\'_blank\')">再次打开推特</button>' +
- '<button class="modal-deny" type="button" onclick="hideAdModal()">已完成</button>' +
- '</div>';
- soundSuccess();
- vibrate(40);
-}
-
-/* ===== 留言板 ===== */
-function toggleChat() {
- const p = document.getElementById('chatPanel');
- p.classList.toggle('collapsed');
- const h = document.getElementById('chatToggleHint');
- if (h) h.textContent = p.classList.contains('collapsed') ? '展开' : '收起';
-}
-function escapeHtml(s) {
- return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function formatChatTime(ts) {
- try {
- const d = ts && ts.toDate ? ts.toDate() : new Date(ts);
- return d.toLocaleString();
- } catch(e) { return ''; }
-}
-function renderChatList(docs) {
- const body = document.getElementById('chatBody');
- if (!body) return;
- if (!docs.length) {
- body.innerHTML = '<div class="chat-empty">还没有留言，来做第一个</div>';
- return;
- }
- body.innerHTML = docs.map(function(doc) {
- const d = doc.data();
- return '<div class="chat-msg"><div class="meta"><span class="name">' +
- escapeHtml(d.name || '匿名母畜') + '</span> · ' + formatChatTime(d.createdAt) +
- '</div><div>' + escapeHtml(d.text || '') + '</div></div>';
- }).join('');
- body.scrollTop = body.scrollHeight;
-}
-function startChatListener() {
- const body = document.getElementById('chatBody');
- if (!db) {
- if (body) body.innerHTML = '<div class="chat-empty">留言板未连接：请先在 Firebase 创建 Firestore 数据库</div>';
- return;
- }
- if (body) body.innerHTML = '<div class="chat-empty">加载中…</div>';
- db.collection('guestbook').limit(50)
- .onSnapshot(function(snap) {
- const docs = [];
- snap.forEach(function(doc) { docs.push(doc); });
- docs.sort(function(a, b) {
- const ta = (a.data().createdAt && a.data().createdAt.toMillis) ? a.data().createdAt.toMillis() : 0;
- const tb = (b.data().createdAt && b.data().createdAt.toMillis) ? b.data().createdAt.toMillis() : 0;
- return ta - tb;
- });
- renderChatList(docs);
-      if (danmuEnabled && docs.length) {
-        const last = docs[docs.length - 1].data();
-        if (last && last.text) spawnDanmu((last.name || '匿名') + '：' + last.text);
+function compressDataUrl(dataUrl, maxSide, quality){
+  return new Promise(function(resolve){
+    const img = new Image();
+    img.onload = function(){
+      let w = img.width, h = img.height;
+      if (w > maxSide || h > maxSide) {
+        if (w >= h) { h = Math.round(h * maxSide / w); w = maxSide; }
+        else { w = Math.round(w * maxSide / h); h = maxSide; }
       }
- }, function(err) {
- console.error(err);
- if (body) body.innerHTML = '<div class="chat-empty">读取失败：' + (err.code || '') + ' ' + (err.message || '请检查 Firestore 是否已创建并发布规则') + '</div>';
- });
-}
-async function sendChat() {
- if (!db) { showToast('留言板未连接'); return; }
- const nickEl = document.getElementById('chatNick');
- const textEl = document.getElementById('chatText');
- const nick = (nickEl && nickEl.value || '').trim().slice(0, 20);
- const text = (textEl && textEl.value || '').trim().slice(0, 200);
- if (!text) { showToast('写点什么再发'); soundError(); return; }
- const btn = document.querySelector('.chat-input-row button');
- if (btn) { btn.disabled = true; btn.textContent = '发送中…'; }
- try {
- await Promise.race([
- db.collection('guestbook').add({
- name: nick || '匿名母畜',
- text: text,
- createdAt: firebase.firestore.FieldValue.serverTimestamp()
- }),
- new Promise(function(_, reject) {
- setTimeout(function(){ reject(new Error('超时：请确认已创建 Firestore 并发布规则')); }, 15000);
- })
- ]);
- if (textEl) textEl.value = '';
- showToast('留言已发送');
- spawnDanmu((nick || '匿名母畜') + '：' + text);
- soundClick();
- } catch (e) {
- console.error(e);
- showToast('发送失败：' + (e.message || e.code || '检查 Firestore 规则'));
- soundError();
- } finally {
- if (btn) { btn.disabled = false; btn.textContent = '发送留言'; }
- }
-}
-function bootChat() {
- if (!document.getElementById('chatBody')) {
- setTimeout(bootChat, 50);
- return;
- }
- startChatListener();
-}
-if (document.readyState === 'loading') {
- document.addEventListener('DOMContentLoaded', bootChat);
-} else {
- bootChat();
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = function(){ resolve(dataUrl); };
+    img.src = dataUrl;
+  });
 }
 
-const saved = localStorage.getItem('nvshen_answers');
-if (saved) {
- try { Object.assign(answers, JSON.parse(saved)); } catch(e) {}
+const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxDM0IofmuQvabUHByopfQ3Ju26RsyFWhvaO3wJrlt_XSRafidPl_taHbbtgDI5sUJMDw/exec';
+const DRIVE_UPLOAD_SECRET = 'qbz03ak47';
+
+function safeFileNamePart(name) {
+  var s = String(name || '').trim();
+  if (!s) return '';
+  s = s.replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').replace(/\s+/g, '_');
+  s = s.replace(/_+/g, '_').replace(/^[_.]+|[_.]+$/g, '');
+  if (s.length > 40) s = s.slice(0, 40);
+  return s;
 }
+function playerNameForFile() {
+  var n = '';
+  try {
+    if (typeof answers !== 'undefined') {
+      if (typeof activeId !== 'undefined' && activeId && typeof QUIZ_DATA !== 'undefined') {
+        var cfg = QUIZ_DATA[activeId];
+        if (cfg && cfg.nameField != null && answers[cfg.nameField]) n = answers[cfg.nameField];
+      }
+      if (!n && answers[0]) n = answers[0];
+      if (!n && answers[1]) n = answers[1];
+      if (!n && answers[99]) n = answers[99];
+      if (!n && answers[108]) n = answers[108];
+      if (!n && answers[75]) n = answers[75];
+      if (!n && answers[39]) n = answers[39];
+      if (!n && answers[46]) n = answers[46];
+    }
+  } catch (e) {}
+  if (Array.isArray(n)) n = n.join('_');
+  n = safeFileNamePart(n);
+  return n || '匿名';
+}
+
+
+/** 从各种 Google 云盘链接里抽出文件 ID */
+function extractDriveFileId(url) {
+  if (!url) return '';
+  var s = String(url).trim();
+  var m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  m = s.match(/googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  // 纯 ID
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(s)) return s;
+  return '';
+}
+/** 生成可尝试的直链列表（按优先级） */
+function driveDisplayCandidates(url) {
+  if (!url) return [];
+  var s = String(url).trim();
+  if (!s) return [];
+  if (/^data:/i.test(s)) return [s];
+  if (!/drive\.google|googleusercontent\.com/i.test(s) && !/^[a-zA-Z0-9_-]{20,}$/.test(s)) return [s];
+  var id = extractDriveFileId(s);
+  if (!id) return [s];
+  return [
+    'https://lh3.googleusercontent.com/d/' + id,
+    'https://drive.google.com/thumbnail?id=' + id + '&sz=w400',
+    'https://drive.google.com/thumbnail?id=' + id + '&sz=w1000',
+    'https://drive.google.com/uc?export=view&id=' + id,
+    'https://drive.google.com/uc?id=' + id + '&export=download'
+  ];
+}
+/** 把 Google 云盘链接转成优先用于 <img> 的地址 */
+function toDisplayImageUrl(url) {
+  var list = driveDisplayCandidates(url);
+  return list.length ? list[0] : '';
+}
+/** 给 img 设置云盘图，失败自动换备用地址 */
+function setDriveImg(imgEl, url) {
+  if (!imgEl) return;
+  var list = driveDisplayCandidates(url);
+  if (!list.length) {
+    imgEl.removeAttribute('src');
+    imgEl.style.opacity = '0.3';
+    return;
+  }
+  var i = 0;
+  imgEl.referrerPolicy = 'no-referrer';
+  function tryNext() {
+    if (i >= list.length) {
+      imgEl.style.opacity = '0.35';
+      return;
+    }
+    var u = list[i++];
+    imgEl.onerror = tryNext;
+    imgEl.onload = function() { imgEl.style.opacity = '1'; imgEl.onerror = null; };
+    imgEl.src = u;
+  }
+  tryNext();
+}
+function driveImgError(el) {
+  if (!el) return;
+  var raw = el.getAttribute('data-drive-fallbacks') || '';
+  var rest = raw ? raw.split('|').filter(Boolean) : [];
+  if (!rest.length) { el.style.opacity = '0.3'; el.onerror = null; return; }
+  var next = rest.shift();
+  el.setAttribute('data-drive-fallbacks', rest.join('|'));
+  el.src = next;
+}
+/** 留言板等 HTML 字符串用的 src（带 data-fallback） */
+function driveImgSrcAttr(url) {
+  var list = driveDisplayCandidates(url);
+  if (!list.length) return '';
+  return escapeHtml(list[0]) + '" data-drive-fallbacks="' + escapeHtml(list.slice(1).join('|'));
+}
+
+async function uploadToDrive(dataUrl, qid, opts){
+  opts = opts || {};
+  try {
+    const base64 = String(dataUrl).replace(/^data:.*?base64,/, '');
+    if (!base64 || base64.length < 32) return { ok: false, error: 'empty_payload' };
+    const mime = opts.mimeType || 'image/jpeg';
+    // category: profile = 头像+留言；quiz = 问卷上传
+    var category = opts.category || 'quiz';
+    var qidStr = String(qid == null ? '' : qid);
+    if (!opts.category) {
+      if (qidStr === 'avatar' || qidStr === 'chat') category = 'profile';
+      else category = 'quiz';
+    }
+    const filename = opts.filename || (playerNameForFile() + '_' + (activeId || 'quiz') + '_q' + qid + '_' + Date.now() + '.jpg');
+    const res = await fetch(DRIVE_UPLOAD_URL, {
+      method: 'POST', mode: 'cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ secret: DRIVE_UPLOAD_SECRET, base64: base64, mimeType: mime, filename: filename, category: category })
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) {
+      return { ok: false, error: 'bad_response:' + String(text).slice(0, 120) };
+    }
+    if (data && data.ok) {
+      var fid = data.id || extractDriveFileId(data.url || '');
+      var best = fid ? ('https://lh3.googleusercontent.com/d/' + fid) : toDisplayImageUrl(data.url || '');
+      return { ok: true, url: best, id: fid || data.id, rawUrl: data.url || '' };
+    }
+    return { ok: false, error: (data && data.error) ? String(data.error) : ('http_' + res.status) };
+  } catch (err) {
+    return { ok: false, error: String(err.message || err) };
+  }
+}
+async function uploadPdfToDrive(pdf){
+  try {
+    var b64 = '';
+    try { b64 = pdf.output('base64'); }
+    catch (e1) {
+      var dataUri = pdf.output('datauristring');
+      b64 = String(dataUri).replace(/^data:.*?base64,/, '');
+    }
+    if (!b64 || b64.length < 100) return { ok: false, error: 'empty_pdf' };
+    const name = playerNameForFile() + '_' + (activeId || 'quiz') + '_' + Date.now() + '.pdf';
+    const res = await fetch(DRIVE_UPLOAD_URL, {
+      method: 'POST', mode: 'cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ secret: DRIVE_UPLOAD_SECRET, base64: b64, mimeType: 'application/pdf', filename: name })
+    });
+    const text = await res.text();
+    var data = null;
+    try { data = JSON.parse(text); } catch (e) {
+      return { ok: false, error: 'bad_response:' + String(text).slice(0, 120) };
+    }
+    if (data && data.ok && data.url) return { ok: true, url: data.url, id: data.id };
+    return { ok: false, error: (data && data.error) ? String(data.error) : ('http_' + res.status) };
+  } catch (err) {
+    return { ok: false, error: String(err.message || err) };
+  }
+}
+async function uploadImage(ev, qid){
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('图片请小于 5MB'); soundError(); return; }
+  if (!file.type || file.type.indexOf('image/') !== 0) { showToast('请选择图片文件'); soundError(); return; }
+  const box = document.getElementById('mediaPreview');
+  if (box) box.innerHTML = '<div class="media-tip">处理中…</div>';
+  showToast('正在处理图片…');
+  try {
+    const raw = await new Promise(function(resolve, reject){
+      const reader = new FileReader();
+      reader.onloadend = function(){ resolve(reader.result); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const forPdf = await compressDataUrl(raw, 1280, 0.82);
+    const forMail = await compressDataUrl(raw, 480, 0.42);
+    const forDrive = await compressDataUrl(raw, 1600, 0.85);
+    ensureMedia(qid).image = forPdf;
+    ensureMedia(qid).imageMail = forMail;
+    if (box) box.innerHTML = '<img src="' + forPdf + '" alt="预览"><div class="media-tip">本地已就绪，正在上传…</div>';
+    const el = document.getElementById('input');
+    if (el && !el.value.trim()) answers[qid] = answers[qid] || '[图片作答]';
+    showToast('正在上传…');
+    const driveRes = await uploadToDrive(forDrive, qid);
+    if (driveRes && driveRes.ok && driveRes.url) {
+      ensureMedia(qid).imageUrl = driveRes.url;
+      if (box) box.innerHTML = '<img src="' + forPdf + '" alt="预览"><div class="media-tip">上传成功</div>';
+      showToast('上传成功');
+    } else {
+      const why = (driveRes && driveRes.error) ? driveRes.error : '未知错误';
+      if (box) box.innerHTML = '<img src="' + forPdf + '" alt="预览"><div class="media-tip">本地/PDF 可用；云端失败：' + String(why).replace(/</g,'&lt;') + '</div>';
+      showToast('云端上传失败，图仍会写入 PDF');
+    }
+    saveProgress();
+    soundClick(); vibrate(25);
+  } catch (err) {
+    console.error(err);
+    if (box) box.innerHTML = '<div class="media-tip">处理失败，请重试</div>';
+    showToast('图片处理失败'); soundError();
+  }
+}
+async function uploadVideo(ev, qid){
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  if (file.size > 25 * 1024 * 1024) { showToast('视频请小于 25MB'); soundError(); return; }
+  if (!file.type || file.type.indexOf('video/') !== 0) { showToast('请选择视频文件'); soundError(); return; }
+  const box = document.getElementById('mediaPreview');
+  if (box) box.innerHTML = '<div class="media-tip">视频读取中…</div>';
+  showToast('正在读取视频…');
+  try {
+    const raw = await new Promise(function(resolve, reject){
+      const reader = new FileReader();
+      reader.onloadend = function(){ resolve(reader.result); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    ensureMedia(qid).videoName = file.name || ('video_' + Date.now());
+    ensureMedia(qid).videoMime = file.type || 'video/mp4';
+    const el = document.getElementById('input');
+    if (el && !el.value.trim()) answers[qid] = answers[qid] || '[视频作答]';
+    if (box) box.innerHTML = '<div class="media-tip">🎬 本地已就绪，正在上传云盘…</div>';
+    showToast('正在上传视频到云盘…');
+    const driveRes = await uploadToDrive(raw, qid, {
+      mimeType: file.type || 'video/mp4',
+      filename: playerNameForFile() + '_' + (activeId || 'quiz') + '_q' + qid + '_' + Date.now() + '.mp4'
+    });
+    if (driveRes && driveRes.ok && driveRes.url) {
+      ensureMedia(qid).videoUrl = driveRes.url;
+      if (box) box.innerHTML = '<div class="media-tip">🎬 上传成功</div>';
+      showToast('视频上传成功');
+    } else {
+      const why = (driveRes && driveRes.error) ? driveRes.error : '未知错误';
+      if (box) box.innerHTML = '<div class="media-tip">🎬 本地已选；云端失败：' + String(why).replace(/</g,'&lt;') + '</div>';
+      showToast('视频云端上传失败（可重试）');
+    }
+    saveProgress();
+    soundClick(); vibrate(25);
+  } catch (err) {
+    console.error(err);
+    if (box) box.innerHTML = '<div class="media-tip">视频处理失败，请重试</div>';
+    showToast('视频处理失败'); soundError();
+  }
+}
+
+function render(){
+  const q=questions[current]; if(!q) return;
+  const area=document.getElementById('form-area');
+  let html='<div class="card"><div class="card-top"><button type="button" class="exit-btn" onclick="showExitModal()">退出</button></div>';
+  html+='<div class="q-title"><span>Q'+q.id+'.</span> '+q.title+'</div>';
+  if(q.img && typeof IMAGES!=='undefined' && IMAGES[q.img]) html+='<img class="q-img" src="'+IMAGES[q.img]+'" alt="插图" onerror="this.style.display=\'none\'">';
+  if(q.type==='radio'||q.type==='scale'){
+    if(q.type==='scale'){
+      html+='<div class="scale">';
+      for(let i=0;i<=10;i++) html+='<label data-value="'+i+'"><input type="radio" name="q'+q.id+'" value="'+i+'" '+(answers[q.id]==i?'checked':'')+'><span>'+i+'</span></label>';
+      html+='</div><p style="text-align:center;font-size:0.78rem;color:#777;margin-top:8px">0 = 最低　　10 = 最高</p>';
+    } else {
+      (q.options||[]).forEach(function(opt){
+        html+='<label data-value="'+String(opt).replace(/"/g,'&quot;')+'"><input type="radio" name="q'+q.id+'" value="'+String(opt).replace(/"/g,'&quot;')+'" '+(answers[q.id]===opt?'checked':'')+'> '+opt+'</label>';
+      });
+    }
+  } else if(q.type==='checkbox'){
+    var _ckArr = answers[q.id];
+    if(!Array.isArray(_ckArr)) _ckArr = _ckArr ? [String(_ckArr)] : [];
+    (q.options||[]).forEach(function(opt){
+      const ck=_ckArr.indexOf(opt)>=0?'checked':'';
+      html+='<label data-value="'+String(opt).replace(/"/g,'&quot;')+'"><input type="checkbox" name="q'+q.id+'" value="'+String(opt).replace(/"/g,'&quot;')+'" '+ck+'> '+opt+'</label>';
+    });
+  } else if(q.type==='textarea'){
+    html+='<textarea id="input">'+(answers[q.id]||'')+'</textarea>'+mediaBarHTML(q.id);
+  } else {
+    html+='<input type="text" id="input" value="'+(answers[q.id]||'')+'" placeholder="请输入...">'+mediaBarHTML(q.id);
+  }
+  html+='<div class="btn-row">';
+  if(current>0) html+='<button type="button" class="nav btn-prev" onclick="prev()">上一题</button>';
+  if(current<questions.length-1) html+='<button type="button" class="nav btn-next" onclick="next()">下一题</button>';
+  else html+='<button type="button" class="nav btn-submit" id="submitBtn" onclick="submit()">提交并生成档案</button>';
+  html+='</div></div>';
+  area.innerHTML=html;
+  updateProgress();
+  updateMetronomeSpeed(q);
+  if(q.type==='radio'||q.type==='scale'){
+    area.querySelectorAll('label[data-value]').forEach(function(label){
+      label.onclick=function(){
+        answers[q.id]=this.getAttribute('data-value');
+        saveProgress();
+        area.querySelectorAll('input[name="q'+q.id+'"]').forEach(function(r){ r.checked=(r.value==answers[q.id]); });
+        soundClick(); vibrate(25);
+      };
+    });
+  }
+  if(q.type==='checkbox'){
+    area.querySelectorAll('input[name="q'+q.id+'"]').forEach(function(cb){
+      cb.addEventListener('change',function(){
+        const vals=[];
+        area.querySelectorAll('input[name="q'+q.id+'"]:checked').forEach(function(c){ vals.push(c.value); });
+        answers[q.id]=vals; saveProgress(); soundClick(); vibrate(20);
+      });
+    });
+  }
+}
+function saveProgress(){
+  if(!activeId) return;
+  const cfg=QUIZ_DATA[activeId];
+  try{
+    localStorage.setItem(cfg.storage, JSON.stringify(answers));
+    localStorage.setItem(cfg.progressKey, String(current));
+    try { localStorage.setItem(cfg.storage + '_media', JSON.stringify(mediaAnswers)); } catch (e2) {}
+  }catch(e){}
+}
+function readAnswer(){
+  const q=questions[current];
+  if(q.type==='radio'||q.type==='scale'){
+    const checked=document.querySelector('input[name="q'+q.id+'"]:checked');
+    return checked?checked.value:answers[q.id];
+  }
+  if(q.type==='checkbox'){
+    const vals=[]; document.querySelectorAll('input[name="q'+q.id+'"]:checked').forEach(function(c){ vals.push(c.value); });
+    return vals;
+  }
+  const el=document.getElementById('input');
+  return el?el.value.trim():answers[q.id];
+}
+function next(){
+  const q=questions[current];
+  let ans=readAnswer(); answers[q.id]=ans;
+  const hasMedia=mediaAnswers[q.id]&&(mediaAnswers[q.id].image||mediaAnswers[q.id].videoName);
+  let empty=false;
+  if(q.type==='checkbox') empty=!ans||!ans.length;
+  else empty=(ans===''||ans==null||ans===undefined)&&!hasMedia;
+  if(empty){ soundError(); vibrate([40,30,40]); showToast('不许空着，可打字或上传图片/视频'); return; }
+  if(hasMedia&&(!ans||ans==='')) answers[q.id]='[媒体作答]';
+  soundNext(); vibrate(35); current++; saveProgress(); render(); showToast(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function prev(){
+  answers[questions[current].id]=readAnswer();
+  soundClick(); vibrate(20); current--; if(current<0) current=0;
+  saveProgress(); render(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function updateProgress(){
+  const pct=Math.round((current/Math.max(questions.length-1,1))*100);
+  const bar=document.getElementById('progress');
+  if(bar){ bar.style.width=pct+'%'; bar.textContent='进度 '+pct+'%'; }
+}
+
+async function submit(){
+  if(submitting) return; submitting=true;
+  const btn=document.getElementById('submitBtn'); if(btn) btn.textContent='生成中...';
+  answers[questions[current].id]=readAnswer();
+  const cfg=QUIZ_DATA[activeId];
+  soundSuccess(); vibrate([50,30,50,30,80]); showToast('正在生成档案...');
+  const resultDiv=document.getElementById('result-page');
+  let html='<h2 style="color:#ff2a2a;text-align:center;margin-bottom:16px">'+cfg.title+' · 填写结果</h2>';
+  html+='<p style="text-align:center;color:#aaa;margin-bottom:20px">提交时间：'+new Date().toLocaleString()+'</p>';
+  questions.forEach(function(q){
+    const ans=answers[q.id];
+    const display=Array.isArray(ans)?ans.join(' / '):(ans||'（未填）');
+    const m=mediaAnswers[q.id]||{};
+    html+='<div style="margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #333"><div style="color:#ff8888;font-weight:600">Q'+q.id+'. '+q.title+'</div><div style="margin-top:4px">答：'+display+'</div>';
+    if(m.image) html+='<div style="margin-top:6px"><img src="'+m.image+'" style="max-width:280px;max-height:180px;border-radius:6px"></div>';
+    if(m.videoName) html+='<div style="margin-top:4px;color:#aaa">🎬 视频：'+String(m.videoName)+(m.videoUrl?'（已上传云盘）':'')+'</div>';
+    html+='</div>';
+  });
+  resultDiv.innerHTML=html;
+  try{
+    const canvas=await html2canvas(resultDiv,{scale:2,backgroundColor:'#111',useCORS:true});
+    const imgData=canvas.toDataURL('image/jpeg',0.92);
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pageWidth=pdf.internal.pageSize.getWidth();
+    const pageHeight=pdf.internal.pageSize.getHeight();
+    const imgWidth=pageWidth;
+    const imgHeight=(canvas.height*imgWidth)/canvas.width;
+    let heightLeft=imgHeight, position=0;
+    pdf.addImage(imgData,'JPEG',0,position,imgWidth,imgHeight);
+    heightLeft-=pageHeight;
+    while(heightLeft>0){ position=heightLeft-imgHeight; pdf.addPage(); pdf.addImage(imgData,'JPEG',0,position,imgWidth,imgHeight); heightLeft-=pageHeight; }
+    const nameVal=playerNameForFile();
+    const pdfFileName=cfg.pdfPrefix+'_'+nameVal+'_'+Date.now()+'.pdf';
+    pdf.save(pdfFileName);
+    window.__lastPdf=pdf; window.__lastPdfName=pdfFileName;
+    showToast('PDF 已开始下载，请务必保存');
+
+    try {
+      showToast('正在上传 PDF 到云盘…');
+      const pdfUp = await uploadPdfToDrive(pdf);
+      if (pdfUp && pdfUp.ok) {
+        window.__lastPdfDriveUrl = pdfUp.url;
+        showToast('PDF 已上传云盘');
+      } else {
+        console.warn('PDF 云盘上传失败', pdfUp && pdfUp.error);
+        showToast('PDF 本地下载成功（云盘上传失败可忽略）');
+      }
+    } catch (e) { console.warn(e); }
+
+    let textBody='【'+cfg.title+' 提交】\n时间：'+new Date().toLocaleString()+'\n姓名：'+nameVal+'\n\n';
+    let hasAnyImage = false;
+    questions.forEach(function(q){
+      const ans=answers[q.id];
+      let ansText=Array.isArray(ans)?ans.join(' / '):(ans||'（未填）');
+      const m = mediaAnswers[q.id] || {};
+      if(m.image || m.imageMail || m.imageUrl){ ansText += ' [含图片]'; hasAnyImage = true; }
+      if(m.videoUrl || m.videoName){ ansText += ' [含视频]'; hasAnyImage = true; }
+      textBody += 'Q'+q.id+'. '+q.title+'\n答：'+ansText+'\n\n';
+    });
+    if (hasAnyImage) textBody += '\n（部分题目含图片/视频，请查看 PDF / 云盘）\n';
+    if (textBody.length > 40000) textBody = textBody.slice(0, 40000) + '\n\n…(正文过长已截断，完整内容请看 PDF)';
+    try{
+      await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,{
+        to_email:RECEIVER_EMAIL, subject:cfg.title+' - '+nameVal, message:textBody,
+        to: RECEIVER_EMAIL, from_name: String(nameVal)
+      });
+      document.getElementById('form-area').innerHTML=
+        '<div class="card final"><h2>提交成功</h2>'+
+        '<p>文字答案已发送到主人邮箱。<br>图片/视频已在对应题目注明；完整内容请查看 PDF / 云盘。</p>'+
+        '<p style="margin-top:14px;color:#ffcc66;line-height:1.55;border:1px solid #665522;background:#2a2208;padding:12px;border-radius:10px">⚠ 请务必保存 PDF！若被拦截，刷新后可能丢失。</p>'+
+        '<button class="nav btn-submit" style="margin-top:16px" type="button" onclick="redownloadPdf()">重新下载 PDF</button>'+
+        '<p style="margin-top:16px;color:#ff8888">现在滚去加 QQ：318260856</p>'+
+        '<button class="nav btn-prev" style="margin-top:12px" type="button" onclick="backHome()">返回</button></div>';
+      document.body.classList.add('virus-mode');
+      const marquee=document.getElementById('marquee');
+      if(marquee){
+        ['堕落母畜','丧志贱货','大脑瘫痪','无脑服从','倒贴废物','白给母畜','夹紧烂穴','跪着求操','自愿上贡','高潮失禁'].forEach(function(txt){
+          const d=document.createElement('div'); d.className='fly-text'; d.textContent=txt;
+          d.style.top=(Math.random()*90)+'%'; d.style.left=(Math.random()*80-20)+'%';
+          d.style.fontSize='clamp('+(28+Math.random()*40)+'px, '+(6+Math.random()*5)+'vw, '+(60+Math.random()*40)+'px)';
+          d.style.animationDuration=(7+Math.random()*5)+'s';
+          marquee.appendChild(d);
+        });
+      }
+      tickInterval=1400;
+      try{ localStorage.removeItem(cfg.storage); localStorage.removeItem(cfg.progressKey); localStorage.removeItem(cfg.storage + '_media'); }catch(e){}
+      soundSuccess(); vibrate([80,40,80,40,120,60,150]);
+      setTimeout(function(){ showAdModal(); },800);
+    }catch(err){
+      console.error('EmailJS', err);
+      soundError(); vibrate([60,40,60]);
+      var em = (err && (err.text || err.message)) ? (err.text || err.message) : String(err);
+      showToast('邮件发送失败：' + String(em).slice(0, 60) + '（PDF 仍可下载）');
+      document.getElementById('form-area').innerHTML=
+        '<div class="card final"><h2>PDF 已生成</h2>'+
+        '<p>邮件发送失败，但本地 PDF 已下载。</p>'+
+        '<p style="color:#ff8888;font-size:0.85rem;margin-top:8px">错误：'+String(em).replace(/</g,'&lt;').slice(0,120)+'</p>'+
+        '<button class="nav btn-submit" style="margin-top:16px" type="button" onclick="redownloadPdf()">重新下载 PDF</button>'+
+        '<button class="nav btn-prev" style="margin-top:12px" type="button" onclick="backHome()">返回</button></div>';
+      if(btn) btn.textContent='提交并生成档案';
+    }
+  }catch(err){
+    console.error(err); showToast('生成失败：' + String(err.message||err).slice(0,50)); if(btn) btn.textContent='提交并生成档案';
+  }
+  submitting=false;
+}
+function redownloadPdf(){
+  if(window.__lastPdf&&window.__lastPdfName){
+    try{ window.__lastPdf.save(window.__lastPdfName); showToast('已再次触发 PDF 下载'); soundSuccess(); }
+    catch(e){ showToast('请允许浏览器下载'); soundError(); }
+  } else showToast('请重新提交以生成 PDF');
+}
+function showExitModal(){ var m=document.getElementById('exitModal'); if(m) m.classList.add('show'); soundError(); vibrate([40,30,40]); }
+function hideExitModal(){ var m=document.getElementById('exitModal'); if(m) m.classList.remove('show'); soundClick(); }
+function showAdModal(){ var m=document.getElementById('adModal'); if(m) m.classList.add('show'); }
+function hideAdModal(){ var m=document.getElementById('adModal'); if(m) m.classList.remove('show'); }
+function agreeAd(){
+  const n=Math.floor(Math.random()*100)+1;
+  const name='小新猪圈第'+n+'号大贱逼';
+  const bio='忠诚！服从！侍奉！@fengliuc3133';
+  const twitterUrl='https://x.com/settings/profile';
+  const copyPayload=name+'\n'+bio;
+  function fallbackCopy(t){ var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); }
+  function doCopy(){
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText)
+        return navigator.clipboard.writeText(copyPayload).catch(function(){fallbackCopy(copyPayload);});
+      fallbackCopy(copyPayload);
+    }catch(e){ fallbackCopy(copyPayload); }
+    return Promise.resolve();
+  }
+  doCopy().then(function(){
+    var win=null;
+    try{ win=window.open(twitterUrl,'_blank','noopener'); }catch(e){ win=null; }
+    if(!win||win.closed||typeof win.closed==='undefined'){
+      try{ window.location.href=twitterUrl; }catch(e2){}
+    }
+  });
+  var box=document.querySelector('#adModal .modal-box');
+  if(box){
+    box.innerHTML=
+      '<h3>已复制 · 请完成授权填充</h3>'+
+      '<p style="text-align:left;font-size:0.88rem;line-height:1.55">推特不允许第三方网页自动修改资料。请你在「编辑资料」页粘贴并保存，即视为授权当广告牌：</p>'+
+      '<div class="copy-hint"><b>① 名字：</b>'+name+'<br><b>② 简介：</b>'+bio+'</div>'+
+      '<p style="font-size:0.82rem;color:#aaa;text-align:left">步骤：打开资料页 → 粘贴名字与简介 → 点保存。内容已在剪贴板。</p>'+
+      '<div class="modal-btns" style="flex-direction:column;gap:8px">'+
+      '<button class="modal-continue" type="button" onclick="window.open(\'https://x.com/settings/profile\',\'_blank\')">再次打开推特资料页</button>'+
+      '<button class="modal-continue" type="button" id="reCopyAdBtn">重新复制名字+简介</button>'+
+      '<button class="modal-deny" type="button" onclick="hideAdModal()">已完成保存</button>'+
+      '</div>';
+    var rc=document.getElementById('reCopyAdBtn');
+    if(rc){ rc.onclick=function(){ doCopy(); showToast('已重新复制'); }; }
+  }
+  soundSuccess(); vibrate(40);
+}
+
+function toggleChat(){ const p=document.getElementById('chatPanel'); if(!p) return; p.classList.toggle('collapsed'); const h=document.getElementById('chatToggleHint'); if(h) h.textContent=p.classList.contains('collapsed')?'展开':'收起'; }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formatChatTime(ts){ try{ const d=ts&&ts.toDate?ts.toDate():new Date(ts); return d.toLocaleString(); }catch(e){ return ''; } }
+function spawnDanmaku(name,text){
+  if(!danmakuOn) return;
+  const layer=document.getElementById('danmakuLayer'); if(!layer) return;
+  const el=document.createElement('div'); el.className='danmaku-item';
+  el.textContent=(name||'匿名')+'：'+(text||'');
+  el.style.top=(8+Math.random()*70)+'%'; el.style.left='100%';
+  el.style.color=['#ffecec','#ffaaaa','#ff8888','#ffccaa','#fff'][Math.floor(Math.random()*5)];
+  el.style.fontSize=(14+Math.random()*6)+'px';
+  layer.appendChild(el);
+  const dur=8+Math.random()*6, start=performance.now(), w=layer.clientWidth+el.offsetWidth+40;
+  function frame(now){ const t=(now-start)/(dur*1000); if(t>=1){ el.remove(); return; } el.style.transform='translateX('+(-t*w)+'px)'; requestAnimationFrame(frame); }
+  requestAnimationFrame(frame);
+}
+function toggleDanmaku(){
+  danmakuOn=!danmakuOn;
+  const btn=document.getElementById('danmakuToggle');
+  if(btn){ btn.textContent=danmakuOn?'弹幕：开':'弹幕：关'; btn.classList.toggle('on',danmakuOn); }
+  const layer=document.getElementById('danmakuLayer');
+  if(!danmakuOn){
+    if(layer) layer.innerHTML='';
+  } else {
+    try{
+      const msgs=document.querySelectorAll('#chatBody .chat-msg');
+      let n=0;
+      msgs.forEach(function(m){
+        if(n>=12) return;
+        const nameEl=m.querySelector('.name');
+        const name=nameEl?nameEl.textContent:'匿名';
+        let text='';
+        const divs=m.querySelectorAll('div');
+        if(divs.length>=2) text=divs[divs.length-1].textContent||'';
+        if(text){ setTimeout(function(){ spawnDanmaku(name,text); }, n*400); n++; }
+      });
+      if(n===0){
+        ['好狗继续填','骚逼真乖','已经开始流水了吧'].forEach(function(t,i){
+          setTimeout(function(){ spawnDanmaku('系统',t); }, i*500);
+        });
+      }
+    }catch(e){ console.warn(e); }
+  }
+  showToast(danmakuOn?'弹幕已开启':'弹幕已关闭');
+}
+var _chatDocsCache = [];
+function renderChatBody(){
+  const body=document.getElementById('chatBody');
+  if(!body) return;
+  const docs = _chatDocsCache || [];
+  if(!docs.length){ body.innerHTML='<div class="chat-empty">还没有留言，来做第一个</div>'; return; }
+  body.innerHTML = docs.map(function(doc){
+    const d = doc.data();
+    const avUrl = d.avatarUrl || '';
+    const imgUrl = d.imageUrl || '';
+    const av = avUrl ? '<img class="av" src="'+driveImgSrcAttr(avUrl)+'" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="driveImgError(this)">' : '<div class="av"></div>';
+    const img = imgUrl ? '<img class="chat-img" src="'+driveImgSrcAttr(imgUrl)+'" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="driveImgError(this)">' : '';
+    const del = isAdmin() ? ('<button type="button" class="del-btn" onclick="event.stopPropagation();deleteChatMsg(\''+doc.id+'\')">删除</button>') : '';
+    var extra = '';
+    if (d.attr) extra += ' · ' + escapeHtml(d.attr);
+    if (d.age) extra += ' · ' + escapeHtml(String(d.age)) + '岁';
+    return '<div class="chat-msg" data-id="'+doc.id+'">'+av+'<div class="body"><div class="meta"><span class="name">'+
+      escapeHtml(d.name||'匿名')+extra+'</span> · '+formatChatTime(d.createdAt)+
+      '</div><div>'+escapeHtml(d.text||'')+'</div>'+img+del+'</div></div>';
+  }).join('');
+  body.scrollTop=body.scrollHeight;
+}
+function startChatListener(){
+  const body=document.getElementById('chatBody');
+  if(typeof db==='undefined' || !db){ if(body) body.innerHTML='<div class="chat-empty">留言板未连接</div>'; return; }
+  db.collection('guestbook').limit(50).onSnapshot(function(snap){
+    const docs=[]; snap.forEach(function(d){ docs.push(d); });
+    docs.sort(function(a,b){ const ta=(a.data().createdAt&&a.data().createdAt.toMillis)?a.data().createdAt.toMillis():0; const tb=(b.data().createdAt&&b.data().createdAt.toMillis)?b.data().createdAt.toMillis():0; return ta-tb; });
+    _chatDocsCache = docs;
+    renderChatBody();
+    docs.forEach(function(doc){ if(seenDanmakuIds[doc.id]) return; seenDanmakuIds[doc.id]=true; const d=doc.data(); const ts=d.createdAt&&d.createdAt.toMillis?d.createdAt.toMillis():0; if(ts&&Date.now()-ts<15000) spawnDanmaku(d.name,d.text); });
+  }, function(err){ if(body) body.innerHTML='<div class="chat-empty">读取失败</div>'; });
+}
+
+/* ===== 账号系统 ===== */
+let auth = null;
+let currentUser = null; // firebase user
+let userProfile = null; // firestore profile
+let pendingAvatarDataUrl = '';
+let pendingChatImageDataUrl = '';
+const AUTH_EMAIL_DOMAIN = 'wenjuan.users';
+
 try {
- const p = parseInt(localStorage.getItem('nvshen_progress') || '0', 10);
- if (!isNaN(p) && p >= 0 && p < total) current = p;
-} catch (e) {}
-render();
-if (current > 0) {
- setTimeout(function() {
- showToast('已恢复上次进度：第 ' + (current + 1) + ' / ' + total + ' 题');
- }, 400);
+  auth = firebase.auth();
+} catch (e) { console.error('Auth 初始化失败', e); }
+
+function usernameToEmail(u) {
+  return String(u || '').trim().toLowerCase() + '@' + AUTH_EMAIL_DOMAIN;
+}
+function isProfileComplete(p) {
+  if (!p) return false;
+  if (!(p.displayName && p.gender && p.age)) return false;
+  // 男性不需要属性
+  if (p.gender === '男') return true;
+  return !!p.attr;
+}
+function toggleAttrByGender() {
+  const g = document.getElementById('profGender');
+  const wrap = document.getElementById('attrFieldWrap');
+  const attr = document.getElementById('profAttr');
+  const priv = document.getElementById('privacyFieldWrap');
+  if (!g || !wrap) return;
+  const isMale = g.value === '男';
+  wrap.style.display = isMale ? 'none' : 'block';
+  if (priv) priv.style.display = isMale ? 'none' : 'block';
+  if (isMale && attr) attr.value = '';
+}
+function openProfileEditor() {
+  if (!currentUser) { showAuthOverlay('login'); return; }
+  showAuthOverlay('profile');
+  const closeBtn = document.getElementById('profCloseBtn');
+  const hint = document.getElementById('profHint');
+  const saveBtn = document.getElementById('profSaveBtn');
+  if (isProfileComplete(userProfile)) {
+    if (closeBtn) closeBtn.style.display = 'block';
+    if (hint) hint.textContent = '修改资料后点击保存';
+    if (saveBtn) saveBtn.textContent = '保存资料';
+  } else {
+    if (closeBtn) closeBtn.style.display = 'none';
+    if (hint) hint.textContent = '完善资料后即可使用全部功能';
+    if (saveBtn) saveBtn.textContent = '保存并进入合集';
+  }
+}
+function closeProfileEditor() {
+  if (!isProfileComplete(userProfile)) {
+    showToast('请先完善资料');
+    return;
+  }
+  hideAuthOverlay();
+}
+function isAdmin() {
+  var u = '';
+  var r = '';
+  if (userProfile) {
+    u = String(userProfile.username || '').toLowerCase().trim();
+    r = String(userProfile.role || '').toLowerCase().trim();
+  }
+  if (!u && currentUser && currentUser.email) {
+    u = String(currentUser.email.split('@')[0] || '').toLowerCase().trim();
+  }
+  // 兼容邮箱前缀、显示名、角色
+  if (r === 'admin' || u === 'xiaoxin') return true;
+  if (userProfile && String(userProfile.displayName || '').toLowerCase().trim() === 'xiaoxin') return true;
+  return false;
+}
+function setAuthErr(msg) {
+  const el = document.getElementById('authErr');
+  if (el) el.textContent = msg || '';
+}
+function switchAuthTab(tab) {
+  const login = document.getElementById('authLoginPane');
+  const reg = document.getElementById('authRegPane');
+  const tl = document.getElementById('tabLogin');
+  const tr = document.getElementById('tabReg');
+  if (tab === 'reg') {
+    login.style.display = 'none'; reg.style.display = 'block';
+    tl.classList.remove('on'); tr.classList.add('on');
+  } else {
+    login.style.display = 'block'; reg.style.display = 'none';
+    tr.classList.remove('on'); tl.classList.add('on');
+  }
+  setAuthErr('');
+}
+function showAuthOverlay(mode) {
+  const ov = document.getElementById('authOverlay');
+  if (!ov) return;
+  ov.classList.remove('hidden');
+  document.getElementById('authLoginPane').style.display = mode === 'profile' ? 'none' : (mode === 'reg' ? 'none' : 'block');
+  document.getElementById('authRegPane').style.display = mode === 'reg' ? 'block' : 'none';
+  document.getElementById('authProfilePane').style.display = mode === 'profile' ? 'block' : 'none';
+  const tabs = document.querySelector('.auth-tabs');
+  if (tabs) tabs.style.display = mode === 'profile' ? 'none' : 'flex';
+  if (mode === 'profile' && userProfile) {
+    const n = document.getElementById('profName'); if (n) n.value = userProfile.displayName || '';
+    const g = document.getElementById('profGender'); if (g) g.value = userProfile.gender || '';
+    const a = document.getElementById('profAge'); if (a) a.value = userProfile.age || '';
+    const at = document.getElementById('profAttr'); if (at) at.value = userProfile.attr || '';
+    const sa = document.getElementById('profShowAttr');
+    if (sa) sa.checked = userProfile.showAttr !== false; // 默认展示属性
+    const sage = document.getElementById('profShowAge');
+    if (sage) sage.checked = !!userProfile.showAge; // 默认不展示年龄
+    toggleAttrByGender();
+    const img = document.getElementById('profAvatarPreview');
+    if (img && userProfile.avatarUrl) setDriveImg(img, userProfile.avatarUrl);
+  }
+  if (mode === 'profile') {
+    const closeBtn = document.getElementById('profCloseBtn');
+    const saveBtn = document.getElementById('profSaveBtn');
+    const hint = document.getElementById('profHint');
+    if (isProfileComplete(userProfile)) {
+      if (closeBtn) closeBtn.style.display = 'block';
+      if (saveBtn) saveBtn.textContent = '保存资料';
+      if (hint) hint.textContent = '修改资料后点击保存';
+    } else {
+      if (closeBtn) closeBtn.style.display = 'none';
+      if (saveBtn) saveBtn.textContent = '保存并进入合集';
+      if (hint) hint.textContent = '完善资料后即可使用全部功能';
+    }
+  }
+}
+function hideAuthOverlay() {
+  const ov = document.getElementById('authOverlay');
+  if (ov) ov.classList.add('hidden');
+}
+function updateUserBar() {
+  const bar = document.getElementById('userBar');
+  if (!bar) return;
+  if (!userProfile || !isProfileComplete(userProfile)) {
+    bar.style.display = 'none';
+    try{ if(typeof renderChatBody==='function') renderChatBody(); }catch(e){}
+    return;
+  }
+  bar.style.display = 'flex';
+  const name = document.getElementById('userBarName');
+  const av = document.getElementById('userBarAv');
+  if (name) name.textContent = (userProfile.displayName || userProfile.username || '') + (userProfile.attr ? ' · ' + userProfile.attr : '') + (isAdmin() ? ' · 管理' : '');
+  if (av) setDriveImg(av, userProfile.avatarUrl || '');
+  try{ if(typeof renderChatBody==='function') renderChatBody(); }catch(e){}
 }
 
-document.body.addEventListener('click', () => {
- if (audioCtx.state === 'suspended') audioCtx.resume();
- startBackgroundAudio();
- requestVibratePermission();
-}, { once: true });
+function requireAuthForAction() {
+  if (!currentUser) {
+    showToast('请先登录');
+    showAuthOverlay('login');
+    return false;
+  }
+  if (!isProfileComplete(userProfile)) {
+    showToast('请先完善资料');
+    showAuthOverlay('profile');
+    return false;
+  }
+  return true;
+}
+async function loadUserProfile(uid) {
+  if (!db || !uid) return null;
+  const snap = await db.collection('users').doc(uid).get();
+  if (!snap.exists) return null;
+  return Object.assign({ uid: uid }, snap.data());
+}
+async function ensureUserDoc(user, username) {
+  if (!db) return;
+  const ref = db.collection('users').doc(user.uid);
+  const snap = await ref.get();
+  const uname = (username || (user.email || '').split('@')[0] || '').toLowerCase().trim();
+  const isAdm = uname === 'xiaoxin';
+  if (!snap.exists) {
+    await ref.set({
+      username: uname,
+      displayName: '',
+      gender: '',
+      age: '',
+      attr: '',
+      avatarUrl: '',
+      role: isAdm ? 'admin' : 'user',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } else {
+    var d = snap.data() || {};
+    var patch = {};
+    if (!d.username && uname) patch.username = uname;
+    if (isAdm && d.role !== 'admin') patch.role = 'admin';
+    if (isAdm && d.username !== 'xiaoxin') patch.username = 'xiaoxin';
+    if (Object.keys(patch).length) {
+      try { await ref.update(patch); } catch (e) { console.warn('ensureUserDoc update', e); }
+    }
+  }
+}
+async function doRegister() {
+  setAuthErr('');
+  const username = (document.getElementById('regUser').value || '').trim().toLowerCase();
+  const pass = document.getElementById('regPass').value || '';
+  if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+    setAuthErr('账号需 3–20 位字母数字或下划线');
+    return;
+  }
+  if (pass.length < 6) {
+    setAuthErr('密码至少 6 位');
+    return;
+  }
+  if (!auth) { setAuthErr('认证服务未就绪'); return; }
+  if (!db) { setAuthErr('数据库未就绪'); return; }
+  try {
+    // 1) 用户名占用表（文档 ID = 用户名，防止重复）
+    const unameRef = db.collection('usernames').doc(username);
+    const occupied = await unameRef.get();
+    if (occupied.exists) {
+      setAuthErr('该账号已被注册，请直接登录或换一个账号');
+      return;
+    }
+    // 2) Firebase Auth 邮箱唯一
+    const email = usernameToEmail(username);
+    let cred;
+    try {
+      cred = await auth.createUserWithEmailAndPassword(email, pass);
+    } catch (e) {
+      if (e.code === 'auth/email-already-in-use') {
+        setAuthErr('该账号已被注册，请直接登录或换一个账号');
+        return;
+      }
+      throw e;
+    }
+    // 3) 写入占用表 + 用户资料（失败则尽量回滚 Auth 用户）
+    try {
+      await unameRef.set({
+        uid: cred.user.uid,
+        username: username,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await ensureUserDoc(cred.user, username);
+    } catch (e) {
+      console.error(e);
+      try { await cred.user.delete(); } catch (e2) {}
+      try { await unameRef.delete(); } catch (e3) {}
+      setAuthErr('注册写入失败，请重试');
+      return;
+    }
+    currentUser = cred.user;
+    userProfile = await loadUserProfile(cred.user.uid);
+    showAuthOverlay('profile');
+    showToast('注册成功，请完善资料');
+  } catch (e) {
+    console.error(e);
+    let msg = e.message || '注册失败';
+    if (e.code === 'auth/email-already-in-use') msg = '该账号已被注册，请直接登录或换一个账号';
+    if (e.code === 'auth/weak-password') msg = '密码太弱，请至少 6 位';
+    if (e.code === 'auth/network-request-failed') msg = '网络错误，请稍后重试';
+    setAuthErr(msg);
+  }
+}
+async function doLogin() {
+  setAuthErr('');
+  const username = (document.getElementById('loginUser').value || '').trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value || '';
+  if (!username || !pass) { setAuthErr('请输入账号和密码'); return; }
+  if (!auth) { setAuthErr('认证服务未就绪'); return; }
+  try {
+    const cred = await auth.signInWithEmailAndPassword(usernameToEmail(username), pass);
+    currentUser = cred.user;
+    await ensureUserDoc(cred.user, username);
+    userProfile = await loadUserProfile(cred.user.uid);
+    if (!isProfileComplete(userProfile)) {
+      showAuthOverlay('profile');
+      showToast('请完善资料后再使用');
+    } else {
+      hideAuthOverlay();
+      updateUserBar();
+      showToast('欢迎，' + (userProfile.displayName || username));
+    }
+  } catch (e) {
+    console.error(e);
+    let msg = '登录失败';
+    if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') msg = '账号或密码错误';
+    setAuthErr(msg);
+  }
+}
+async function doLogout() {
+  try {
+    if (auth) await auth.signOut();
+  } catch (e) {}
+  currentUser = null;
+  userProfile = null;
+  updateUserBar();
+  showAuthOverlay('login');
+  showToast('已退出');
+}
+function onAvatarPick(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  if (!f.type.startsWith('image/')) { setAuthErr('请选择图片'); return; }
+  const reader = new FileReader();
+  reader.onload = function() {
+    const img = new Image();
+    img.onload = function() {
+      const max = 256;
+      let w = img.width, h = img.height;
+      const scale = Math.min(1, max / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      pendingAvatarDataUrl = c.toDataURL('image/jpeg', 0.85);
+      const prev = document.getElementById('profAvatarPreview');
+      if (prev) prev.src = pendingAvatarDataUrl;
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(f);
+}
+async function uploadAvatarIfNeeded(uid) {
+  if (!pendingAvatarDataUrl) return (userProfile && userProfile.avatarUrl) || '';
+  const dataUrl = pendingAvatarDataUrl;
+  pendingAvatarDataUrl = '';
+  try {
+    if (typeof uploadToDrive === 'function') {
+      const uname = (userProfile && userProfile.username) || uid;
+      const fname = 'avatar_' + uname + '_' + Date.now() + '.jpg';
+      const result = await uploadToDrive(dataUrl, 'avatar', { filename: fname, mimeType: 'image/jpeg', category: 'profile' });
+      if (result && result.ok && result.url) return result.url;
+    }
+  } catch (e) {
+    console.warn('头像云盘上传失败，改用内嵌', e);
+  }
+  return dataUrl;
+}
+async function saveProfile() {
+  setAuthErr('');
+  if (!currentUser || !db) { setAuthErr('请先登录'); return; }
+  const displayName = (document.getElementById('profName').value || '').trim();
+  const gender = document.getElementById('profGender').value;
+  const age = String(document.getElementById('profAge').value || '').trim();
+  let attr = document.getElementById('profAttr').value;
+  if (gender === '男') attr = '';
+  if (!displayName || !gender || !age) {
+    setAuthErr('请完整填写姓名、性别、年龄');
+    return;
+  }
+  if (gender !== '男' && !attr) {
+    setAuthErr('请选择属性');
+    return;
+  }
+  try {
+    const avatarUrl = await uploadAvatarIfNeeded(currentUser.uid);
+    const uname = (userProfile && userProfile.username) || (currentUser.email || '').split('@')[0];
+    const role = uname === 'xiaoxin' ? 'admin' : ((userProfile && userProfile.role) || 'user');
+    const showAttrEl = document.getElementById('profShowAttr');
+    const showAgeEl = document.getElementById('profShowAge');
+    const showAttr = gender === '男' ? false : (showAttrEl ? !!showAttrEl.checked : true);
+    const showAge = gender === '男' ? false : (showAgeEl ? !!showAgeEl.checked : false);
+    const data = {
+      username: uname,
+      displayName: displayName,
+      gender: gender,
+      age: age,
+      attr: attr,
+      showAttr: showAttr,
+      showAge: showAge,
+      avatarUrl: toDisplayImageUrl(avatarUrl || (userProfile && userProfile.avatarUrl) || ''),
+      role: role,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    await db.collection('users').doc(currentUser.uid).set(data, { merge: true });
+    userProfile = Object.assign({ uid: currentUser.uid }, data);
+    hideAuthOverlay();
+    updateUserBar();
+    showToast('资料已保存');
+  } catch (e) {
+    console.error(e);
+    setAuthErr('保存失败：' + (e.message || e));
+  }
+}
+function onChatImgPick(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  if (!f.type.startsWith('image/')) { showToast('请选择图片'); return; }
+  const reader = new FileReader();
+  reader.onload = function() {
+    const img = new Image();
+    img.onload = function() {
+      const max = 960;
+      let w = img.width, h = img.height;
+      const scale = Math.min(1, max / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      pendingChatImageDataUrl = c.toDataURL('image/jpeg', 0.8);
+      const prev = document.getElementById('chatImgPreview');
+      if (prev) prev.src = pendingChatImageDataUrl;
+      const wrap = document.getElementById('chatImgPreviewWrap');
+      if (wrap) wrap.classList.add('show');
+      const hint = document.getElementById('chatImgHint');
+      if (hint) hint.textContent = '已选图（可点×清除）';
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(f);
+}
+function clearChatImage(){
+  pendingChatImageDataUrl='';
+  const prev=document.getElementById('chatImgPreview');
+  if(prev){ prev.removeAttribute('src'); prev.src=''; }
+  const wrap=document.getElementById('chatImgPreviewWrap');
+  if(wrap) wrap.classList.remove('show');
+  const hint=document.getElementById('chatImgHint'); if(hint) hint.textContent='';
+  const inp=document.getElementById('chatImgInput'); if(inp) inp.value='';
+}
+async function uploadChatImage(uid) {
+  if (!pendingChatImageDataUrl) return '';
+  let dataUrl = pendingChatImageDataUrl;
+  pendingChatImageDataUrl = '';
+  try {
+    dataUrl = await new Promise(function(resolve) {
+      const img = new Image();
+      img.onload = function() {
+        const max = 480;
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, max / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = function() { resolve(dataUrl); };
+      img.src = dataUrl;
+    });
+  } catch (e) {}
+  try {
+    if (typeof uploadToDrive === 'function') {
+      const uname = (userProfile && userProfile.username) || uid;
+      const fname = 'chat_' + uname + '_' + Date.now() + '.jpg';
+      const result = await uploadToDrive(dataUrl, 'chat', { filename: fname, mimeType: 'image/jpeg', category: 'profile' });
+      if (result && result.ok && result.url) return result.url;
+    }
+  } catch (e) {
+    console.warn('留言图云盘上传失败，改用内嵌', e);
+  }
+  return dataUrl;
+}
 
-document.body.addEventListener('touchstart', () => {
- if (audioCtx.state === 'suspended') audioCtx.resume();
- startBackgroundAudio();
-}, { once: true });
+if (auth) {
+  auth.onAuthStateChanged(async function(user) {
+    currentUser = user;
+    if (!user) {
+      userProfile = null;
+      updateUserBar();
+      showAuthOverlay('login');
+      return;
+    }
+    try {
+      await ensureUserDoc(user);
+      userProfile = await loadUserProfile(user.uid);
+      if (!isProfileComplete(userProfile)) {
+        showAuthOverlay('profile');
+      } else {
+        hideAuthOverlay();
+        updateUserBar();
+      }
+    } catch (e) {
+      console.error(e);
+      showAuthOverlay('login');
+    }
+  });
+} else {
+  showAuthOverlay('login');
+}
+
+
+async function deleteChatMsg(id){
+  if(!isAdmin()){ showToast('无权限'); return; }
+  if(!db || !id) return;
+  if(!confirm('确定删除这条留言？')) return;
+  try{
+    await db.collection('guestbook').doc(id).delete();
+    showToast('已删除');
+  }catch(e){ console.error(e); showToast('删除失败'); }
+}
+async function sendChat(){
+  if(!requireAuthForAction()) return;
+  if(typeof db==='undefined' || !db){ showToast('留言板未连接'); return; }
+  const text=(document.getElementById('chatText').value||'').trim().slice(0,200);
+  if(!text && !pendingChatImageDataUrl){ showToast('写点什么或选张图再发'); soundError(); return; }
+  const btn=document.querySelector('.chat-input-row .send-btn');
+  if(btn){ btn.disabled=true; btn.textContent='发送中…'; }
+  try{
+    let imageUrl = '';
+    if(pendingChatImageDataUrl) imageUrl = await uploadChatImage(currentUser.uid);
+    var isFemale = userProfile && userProfile.gender === '女';
+    var showAttr = isFemale && userProfile.showAttr !== false;
+    var showAge = isFemale && !!userProfile.showAge;
+    await db.collection('guestbook').add({
+      uid: currentUser.uid,
+      name: (userProfile && userProfile.displayName) || (userProfile && userProfile.username) || '用户',
+      avatarUrl: toDisplayImageUrl((userProfile && userProfile.avatarUrl) || ''),
+      attr: showAttr ? ((userProfile && userProfile.attr) || '') : '',
+      age: showAge ? String((userProfile && userProfile.age) || '') : '',
+      gender: (userProfile && userProfile.gender) || '',
+      text: text || '',
+      imageUrl: toDisplayImageUrl(imageUrl || ''),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('chatText').value='';
+    pendingChatImageDataUrl='';
+    clearChatImage();
+    const hint=document.getElementById('chatImgHint'); if(hint) hint.textContent='';
+    const inp=document.getElementById('chatImgInput'); if(inp) inp.value='';
+    showToast('留言已发送'); soundClick();
+    if(typeof spawnDanmaku==='function') spawnDanmaku((userProfile&&userProfile.displayName)||'用户', text||'[图片]');
+  }catch(e){ console.error(e); showToast('发送失败'); soundError(); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent='发送留言'; } }
+}
+
+function refreshHomeProgress(){
+  let any=false;
+  ['q1','q2','q3','q4','q5','q6','q7','q8','q9'].forEach(function(id){
+    const cfg=QUIZ_DATA[id]; if(!cfg) return;
+    const tag=document.getElementById('tag-'+id);
+    if(!tag) return;
+    try{
+      const p=parseInt(localStorage.getItem(cfg.progressKey)||'0',10);
+      const total=(cfg.questions||[]).length;
+      if(!isNaN(p)&&p>0&&p<total){
+        tag.textContent='继续填写 · 第 '+(p+1)+' / '+total+' 题';
+        tag.style.borderColor='#ff2a2a';
+        tag.style.color='#ffaaaa';
+        any=true;
+      } else {
+        tag.textContent='进入填写 →';
+        tag.style.borderColor='';
+        tag.style.color='';
+      }
+    }catch(e){}
+  });
+  const hint=document.getElementById('progressHint');
+  if(hint) hint.style.display=any?'block':'none';
+}
+
+refreshHomeProgress();
+startChatListener();
+// 仅解锁音频上下文；节拍器只在进入问卷后由 startQuiz → startBackgroundAudio 启动
+document.body.addEventListener('click', function(){ if(audioCtx.state==='suspended') audioCtx.resume(); requestVibratePermission(); }, {once:true});
+document.body.addEventListener('touchstart', function(){ if(audioCtx.state==='suspended') audioCtx.resume(); requestVibratePermission(); }, {once:true});
+
 </script>
-
-<!-- 退出弹窗 -->
-<div class="modal-mask" id="exitModal">
- <div class="modal-box">
- <h3>贱逼婊子这就不行了？</h3>
- <p>继续写，不许逃。</p>
- <div class="modal-btns">
- <button class="modal-continue" onclick="hideExitModal()">继续</button>
- </div>
- </div>
-</div>
-
-<!-- 提交后广告牌弹窗 -->
-<div class="modal-mask" id="adModal">
- <div class="modal-box">
- <h3>想不想给祖宗当广告牌？</h3>
- <p>点击「同意」视为授权：将打开推特资料页，并复制名字与简介供你粘贴保存。</p>
- <div class="modal-btns">
- <button class="modal-agree" onclick="agreeAd()">同意</button>
- <button class="modal-deny" onclick="hideAdModal()">不要</button>
- </div>
- </div>
-</div>
-
+<div id="app-version-foot" style="text-align:center;color:#555;font-size:0.75rem;padding:12px;position:relative;z-index:10">单页版 · 女神洗脑表单</div>
 </body>
 </html>
